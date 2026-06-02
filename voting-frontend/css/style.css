@@ -1,0 +1,167 @@
+body {
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Hero секция главной */
+.hero-section {
+    background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+}
+
+/* Карточки голосований */
+.poll-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+
+.poll-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12) !important;
+}
+
+.poll-image-wrapper {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.poll-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.poll-card:hover .poll-image {
+    transform: scale(1.05);
+}
+
+.poll-image-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+}
+
+.poll-type-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+}
+
+.poll-live-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Hero изображение на странице голосования */
+.poll-hero-image {
+    max-height: 300px;
+    width: 100%;
+    object-fit: cover;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Вертикальные варианты голосования */
+.option-row-vote {
+    cursor: pointer;
+}
+
+.option-selectable-vote {
+    border: 2px solid #dee2e6;
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.option-selectable-vote:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 2px 12px rgba(13, 110, 253, 0.12);
+}
+
+.option-selectable-vote.selected {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.04);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+}
+
+.option-image-vote {
+    width: 120px;
+    height: 100%;
+    min-height: 80px;
+    object-fit: cover;
+}
+
+@media (max-width: 576px) {
+    .option-image-vote {
+        width: 80px;
+    }
+}
+
+/* Результаты голосования */
+.result-item {
+    padding: 0.75rem 0;
+}
+
+.progress {
+    border-radius: 0.5rem;
+    background-color: #e9ecef;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.progress-bar {
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Навигация */
+.navbar-brand {
+    font-weight: 600;
+}
+
+/* Карточки */
+.card {
+    border-radius: 0.75rem;
+    border: none;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.badge {
+    font-weight: 500;
+}
+
+/* Бейдж завершенного голосования */
+.poll-closed-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+}
+
+/* Toast уведомления */
+.toast-container {
+    z-index: 9999;
+}
+
+/* Валидация форм */
+.invalid-feedback {
+    font-size: 0.875rem;
+}

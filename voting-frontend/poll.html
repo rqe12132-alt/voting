@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Голосование</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" id="mainNav"></nav>
+
+    <div class="container mt-4">
+        <div id="pollContainer">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="text-muted mt-2">Загрузка...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/toast.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        initAuth();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const pollId = urlParams.get('id');
+        let pollData = null;
+        let connection = null;
+
+        async function loadPoll() {
+            try {
+                pollData = await api(`/polls/${pollId}`);
+                const myVote = await api(`/polls/${pollId}/my-vote`).catch(() => null);
+
+                if (myVote) {
+                    showResults(true);
+                } else {
+                    showVotingForm();
+                }
+            } catch (e) {
+                document.getElementById('pollContainer').innerHTML = `<div class="alert alert-danger">${e.message}</div>`;
+            }
+        }
+
+        function showVotingForm() {
+            const isMultiple = pollData.type === 'MultipleChoice';
+            const inputType = isMultiple ? 'checkbox' : 'radio';
+            const nameAttr = isMultiple ? '' : `name="pollOption"`;
+
+            const html = `
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="text-center mb-4">
+                            ${pollData.imageUrl ? `<img src="${pollData.imageUrl}" class="img-fluid rounded poll-hero-image mb-3" alt="${pollData.title}">` : ''}
+                            <h2>${pollData.title}</h2>
+                            ${pollData.description ? `<p class="text-muted">${pollData.description}</p>` : ''}
+                        </div>
+
+                        <form id="voteForm">
+                            <div class="vstack gap-3">
+                                ${pollData.options.map((opt, idx) => `
+                                    <div class="option-row-vote">
+                                        <input class="form-check-input d-none" type="${inputType}" id="opt${idx}" value="${opt.id}" ${nameAttr}>
+                                        <label class="form-check-label w-100" for="opt${idx}">
+                                            <div class="card option-selectable-vote">
+                                                <div class="row g-0">
+                                                    ${opt.imageUrl ? `
+                                                    <div class="col-auto">
+                                                        <img src="${opt.imageUrl}" class="option-image-vote" alt="${opt.text}">
+                                                    </div>` : ''}
+                                                    <div class="col">
+                                                        <div class="card-body d-flex align-items-center h-100">
+                                                            <div class="form-check m-0">
+                                                                <input class="form-check-input" type="${inputType}" disabled style="opacity:0;position:absolute;">
+                                                                <span class="fs-5 fw-medium">${opt.text}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button type="button" class="btn btn-success w-100 mt-4 py-2 fs-5" onclick="submitVote()">
+                                Проголосовать
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.getElementById('pollContainer').innerHTML = html;
+
+            // Обработчик выделения
+            document.querySelectorAll('.option-selectable-vote').forEach(card => {
+                card.addEventListener('click', function() {
+                    const checkbox = this.closest('.option-row-vote').querySelector('input[type="radio"], input[type="checkbox"]');
+                    if (checkbox.type === 'radio') {
+                        document.querySelectorAll('.option-selectable-vote').forEach(c => c.classList.remove('selected'));
+                        checkbox.checked = true;
+                        this.classList.add('selected');
+                    } else {
+                        checkbox.checked = !checkbox.checked;
+                        this.classList.toggle('selected', checkbox.checked);
+                    }
+                });
+            });
+        }
+
+        async function submitVote() {
+            const inputs = document.querySelectorAll('#voteForm input:checked');
+            if (inputs.length === 0) {
+                Toast.warning('Выберите хотя бы один вариант');
+                return;
+            }
+            const optionIds = Array.from(inputs).map(i => i.value);
+
+            try {
+                await api(`/polls/${pollId}/vote`, {
+                    method: 'POST',
+                    body: { optionIds }
+                });
+                Toast.success('Голос принят!');
+                showResults(false);
+            } catch (e) {
+                Toast.error(e.message);
+            }
+        }
+
+        async function showResults(alreadyVoted) {
+            try {
+                const results = await api(`/polls/${pollId}/results`);
+                renderResults(results, alreadyVoted);
+                if (pollData.isRealtime) {
+                    startSignalR();
+                }
+            } catch (e) {
+                document.getElementById('pollContainer').innerHTML = `<div class="alert alert-info">Результаты пока недоступны</div>`;
+            }
+        }
+
+        function renderResults(results, alreadyVoted = true) {
+            const total = results.totalVotes;
+
+            const html = `
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="text-center mb-4">
+                            ${pollData.imageUrl ? `<img src="${pollData.imageUrl}" class="img-fluid rounded poll-hero-image mb-3" alt="${pollData.title}">` : ''}
+                            <h2>${results.title}</h2>
+                            <p class="text-muted">Всего голосов: <strong class="fs-4 text-primary">${total}</strong></p>
+                            ${pollData.isRealtime ? '<span class="badge bg-danger mb-2">ONLINE / LIVE</span>' : ''}
+                        </div>
+
+                        ${alreadyVoted ? `
+                        <div class="alert alert-success d-flex align-items-center mb-4" role="alert">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>
+                            <div>Вы уже проголосовали в этом голосовании. Результаты обновляются в реальном времени.</div>
+                        </div>
+                        ` : ''}
+
+                        <div class="vstack gap-4">
+                            ${results.results.map(r => {
+                                const pct = r.percentage;
+                                const barColor = pct >= 50 ? 'bg-success' : pct >= 20 ? 'bg-info' : 'bg-secondary';
+                                return `
+                                <div class="result-item">
+                                    <div class="d-flex justify-content-between align-items-end mb-2">
+                                        <span class="fs-5 fw-semibold">${r.optionText}</span>
+                                        <div class="text-end">
+                                            <span class="fs-4 fw-bold text-primary">${r.count}</span>
+                                            <span class="text-muted"> голосов</span>
+                                            <span class="badge ${barColor} ms-2">${pct}%</span>
+                                        </div>
+                                    </div>
+                                    <div class="progress" style="height: 36px;">
+                                        <div class="progress-bar ${barColor}" role="progressbar"
+                                             style="width: ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
+                                            ${pct > 8 ? pct + '%' : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <a href="/index.html" class="btn btn-outline-primary mt-4">Назад к списку</a>
+                    </div>
+                </div>
+            `;
+            document.getElementById('pollContainer').innerHTML = html;
+        }
+
+        function startSignalR() {
+            if (connection) return;
+
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl(`http://localhost:5000/hubs/poll?access_token=${localStorage.getItem('accessToken')}`)
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on('ResultsUpdated', (results) => {
+                renderResults(results, true);
+            });
+
+            connection.start().then(() => {
+                connection.invoke('JoinPollGroup', pollId);
+            }).catch(err => console.error('SignalR error:', err));
+        }
+
+        loadPoll();
+    </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Журнал аудита</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="mainNav"></nav>
+
+    <div class="container mt-4">
+        <h1>Журнал аудита</h1>
+        <p class="text-muted">История действий в системе</p>
+
+        <div class="table-responsive mt-3">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Дата</th>
+                        <th>Пользователь</th>
+                        <th>Действие</th>
+                        <th>Объект</th>
+                        <th>Описание</th>
+                    </tr>
+                </thead>
+                <tbody id="auditTable">
+                    <tr><td colspan="5" class="text-center">Загрузка...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-center mt-3" id="auditPagination">
+            <button class="btn btn-outline-secondary" onclick="loadAudit(currentPage - 1)" id="prevPage">Назад</button>
+            <span class="mx-3" id="pageInfo">Страница 1</span>
+            <button class="btn btn-outline-secondary" onclick="loadAudit(currentPage + 1)" id="nextPage">Вперед</button>
+        </div>
+    </div>
+
+    <footer class="bg-light text-center py-4 mt-5 border-top">
+        <div class="container">
+            <p class="text-muted mb-0">Онлайн-сервис голосований</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/toast.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        initAuth().then(ok => {
+            if (!ok || !isAdmin()) {
+                window.location.href = '/index.html';
+            }
+        });
+
+        let currentPage = 1;
+        const pageSize = 50;
+        let totalItems = 0;
+
+        async function loadAudit(page = 1) {
+            if (page < 1) page = 1;
+            currentPage = page;
+
+            try {
+                const data = await api(`/admin/audit?page=${page}&pageSize=${pageSize}`);
+                totalItems = data.total;
+                const logs = data.items;
+
+                const tbody = document.getElementById('auditTable');
+                if (logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Нет записей</td></tr>';
+                } else {
+                    tbody.innerHTML = logs.map(log => `
+                        <tr>
+                            <td>${new Date(log.createdAt).toLocaleString()}</td>
+                            <td>${log.userEmail || 'Система'}</td>
+                            <td><span class="badge bg-${actionColor(log.action)}">${log.action}</span></td>
+                            <td>${log.entityType} ${log.entityId ? '(' + log.entityId.substring(0, 8) + '...)' : ''}</td>
+                            <td>${log.description}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                document.getElementById('pageInfo').textContent = `Страница ${page}`;
+                document.getElementById('prevPage').disabled = page <= 1;
+                document.getElementById('nextPage').disabled = page * pageSize >= totalItems;
+            } catch (e) {
+                Toast.error(e.message);
+            }
+        }
+
+        function actionColor(action) {
+            switch(action) {
+                case 'CREATE': return 'success';
+                case 'PUBLISH': return 'primary';
+                case 'DELETE': return 'danger';
+                case 'VOTE': return 'info';
+                case 'LOGIN': return 'secondary';
+                default: return 'light';
+            }
+        }
+
+        loadAudit(1);
+    </script>
+</body>
+</html>
