@@ -1,11 +1,19 @@
 {
   "Version": 1,
-  "Hash": "eT+0/zOezDfWjq0uFC15hDHtU18AlhOpq+XJwjkW6lI=",
+  "Hash": "mYCE2gOP9WUrpxsDx3rvwCEvS+yI6+Lv6cyJKdISfX4=",
   "Source": "VotingApp",
   "BasePath": "_content/VotingApp",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "VotingApp/wwwroot",
+      "Source": "VotingApp",
+      "ContentRoot": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/",
+      "BasePath": "_content/VotingApp",
+      "Pattern": "**"
+    }
+  ],
   "Assets": []
 }

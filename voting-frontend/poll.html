@@ -56,64 +56,70 @@
                 <div class="row justify-content-center">
                     <div class="col-lg-8">
                         <div class="text-center mb-4">
-                            ${pollData.imageUrl ? `<img src="${pollData.imageUrl}" class="img-fluid rounded poll-hero-image mb-3" alt="${pollData.title}">` : ''}
+                            ${pollData.imageUrl ? `<img src="${resolveImageUrl(pollData.imageUrl)}" class="img-fluid rounded poll-hero-image mb-3" alt="${pollData.title}">` : ''}
                             <h2>${pollData.title}</h2>
                             ${pollData.description ? `<p class="text-muted">${pollData.description}</p>` : ''}
                         </div>
 
-                        <form id="voteForm">
-                            <div class="vstack gap-3">
-                                ${pollData.options.map((opt, idx) => `
-                                    <div class="option-row-vote">
-                                        <input class="form-check-input d-none" type="${inputType}" id="opt${idx}" value="${opt.id}" ${nameAttr}>
-                                        <label class="form-check-label w-100" for="opt${idx}">
-                                            <div class="card option-selectable-vote">
-                                                <div class="row g-0">
-                                                    ${opt.imageUrl ? `
-                                                    <div class="col-auto">
-                                                        <img src="${opt.imageUrl}" class="option-image-vote" alt="${opt.text}">
-                                                    </div>` : ''}
-                                                    <div class="col">
-                                                        <div class="card-body d-flex align-items-center h-100">
-                                                            <div class="form-check m-0">
-                                                                <input class="form-check-input" type="${inputType}" disabled style="opacity:0;position:absolute;">
-                                                                <span class="fs-5 fw-medium">${opt.text}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                        <div id="voteOptions">
+                            ${pollData.options.map((opt, idx) => `
+                                <div class="option-card mb-3" data-index="${idx}" onclick="toggleOption(${idx})">
+                                    <div class="card option-selectable-vote cursor-pointer">
+                                        <div class="row g-0">
+                                            ${opt.imageUrl ? `
+                                            <div class="col-auto">
+                                                <img src="${resolveImageUrl(opt.imageUrl)}" class="option-image-vote" alt="${opt.text}">
+                                            </div>` : ''}
+                                            <div class="col">
+                                                <div class="card-body d-flex align-items-center h-100">
+                                                    <input type="${inputType}" class="option-input me-3" id="optInput${idx}" value="${opt.id}" ${nameAttr}>
+                                                    <span class="fs-5 fw-medium">${opt.text}</span>
                                                 </div>
                                             </div>
-                                        </label>
+                                        </div>
                                     </div>
-                                `).join('')}
-                            </div>
-                            <button type="button" class="btn btn-success w-100 mt-4 py-2 fs-5" onclick="submitVote()">
-                                Проголосовать
-                            </button>
-                        </form>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button type="button" class="btn btn-success w-100 mt-4 py-2 fs-5" onclick="submitVote()">
+                            Проголосовать
+                        </button>
                     </div>
                 </div>
             `;
             document.getElementById('pollContainer').innerHTML = html;
+        }
 
-            // Обработчик выделения
-            document.querySelectorAll('.option-selectable-vote').forEach(card => {
-                card.addEventListener('click', function() {
-                    const checkbox = this.closest('.option-row-vote').querySelector('input[type="radio"], input[type="checkbox"]');
-                    if (checkbox.type === 'radio') {
-                        document.querySelectorAll('.option-selectable-vote').forEach(c => c.classList.remove('selected'));
-                        checkbox.checked = true;
-                        this.classList.add('selected');
-                    } else {
-                        checkbox.checked = !checkbox.checked;
-                        this.classList.toggle('selected', checkbox.checked);
-                    }
-                });
-            });
+        function toggleOption(idx) {
+            const input = document.getElementById(`optInput${idx}`);
+            const card = input.closest('.option-selectable-vote');
+            const isMultiple = pollData.type === 'MultipleChoice';
+
+            if (isMultiple) {
+                // Checkbox: toggle
+                input.checked = !input.checked;
+                card.classList.toggle('selected', input.checked);
+            } else {
+                // Radio: toggle (allow unselect)
+                const allInputs = document.querySelectorAll('.option-input');
+                const allCards = document.querySelectorAll('.option-selectable-vote');
+                
+                if (input.checked) {
+                    // Already selected -> unselect
+                    input.checked = false;
+                    allCards.forEach(c => c.classList.remove('selected'));
+                } else {
+                    // Select this one
+                    allInputs.forEach(i => i.checked = false);
+                    allCards.forEach(c => c.classList.remove('selected'));
+                    input.checked = true;
+                    card.classList.add('selected');
+                }
+            }
         }
 
         async function submitVote() {
-            const inputs = document.querySelectorAll('#voteForm input:checked');
+            const inputs = document.querySelectorAll('.option-input:checked');
             if (inputs.length === 0) {
                 Toast.warning('Выберите хотя бы один вариант');
                 return;
@@ -151,7 +157,7 @@
                 <div class="row justify-content-center">
                     <div class="col-lg-8">
                         <div class="text-center mb-4">
-                            ${pollData.imageUrl ? `<img src="${pollData.imageUrl}" class="img-fluid rounded poll-hero-image mb-3" alt="${pollData.title}">` : ''}
+                            ${pollData.imageUrl ? `<img src="${resolveImageUrl(pollData.imageUrl)}" class="img-fluid rounded poll-hero-image mb-3" alt="${pollData.title}">` : ''}
                             <h2>${results.title}</h2>
                             <p class="text-muted">Всего голосов: <strong class="fs-4 text-primary">${total}</strong></p>
                             ${pollData.isRealtime ? '<span class="badge bg-danger mb-2">ONLINE / LIVE</span>' : ''}

@@ -73,8 +73,46 @@ body {
 }
 
 /* Вертикальные варианты голосования */
-.option-row-vote {
+.option-card {
     cursor: pointer;
+}
+
+.option-selectable-vote {
+    border: 2px solid #dee2e6;
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.option-selectable-vote:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 2px 12px rgba(13, 110, 253, 0.12);
+}
+
+.option-selectable-vote.selected {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.04);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+}
+
+.option-input {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: #0d6efd;
+}
+
+.option-image-vote {
+    width: 120px;
+    height: 100%;
+    min-height: 80px;
+    object-fit: cover;
+}
+
+@media (max-width: 576px) {
+    .option-image-vote {
+        width: 80px;
+    }
 }
 
 .option-selectable-vote {

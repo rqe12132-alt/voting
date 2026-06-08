@@ -1,4 +1,11 @@
 const API_BASE_URL = 'http://localhost:5000/api';
+const STATIC_BASE_URL = 'http://localhost:5000';
+
+function resolveImageUrl(url) {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return STATIC_BASE_URL + url;
+}
 
 async function api(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;

@@ -129,7 +129,7 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="card poll-card h-100 shadow-sm border-0">
                         <div class="poll-image-wrapper">
-                            <img src="${poll.imageUrl || 'https://images.unsplash.com/photo-1540910419-bcae71f8fe6e?w=600&h=400&fit=crop'}"
+                            <img src="${resolveImageUrl(poll.imageUrl) || 'https://images.unsplash.com/photo-1540910419-bcae71f8fe6e?w=600&h=400&fit=crop'}"
                                  class="card-img-top poll-image" alt="${poll.title}">
                             <div class="poll-image-overlay"></div>
                             <span class="badge bg-${getTypeBadge(poll.type)} poll-type-badge">${getTypeLabel(poll.type)}</span>

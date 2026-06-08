@@ -38,9 +38,13 @@
                             <textarea class="form-control" id="pollDescription" rows="2"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Изображение голосования (URL)</label>
-                            <input type="url" class="form-control" id="pollImageUrl" placeholder="https://example.com/image.jpg">
-                            <div class="form-text">Вставьте ссылку на изображение. Необязательно.</div>
+                            <label class="form-label">Изображение голосования</label>
+                            <input type="file" class="form-control" id="pollImageFile" accept="image/*" onchange="handlePollImageUpload()">
+                            <input type="hidden" id="pollImageUrl" value="">
+                            <div id="pollImagePreview" class="mt-2 d-none">
+                                <img src="" class="img-thumbnail" style="max-height:150px;" alt="Preview">
+                            </div>
+                            <div class="form-text">Загрузите фото с компьютера. Макс. 5 МБ.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Тип голосования</label>
@@ -53,23 +57,31 @@
                         <div class="mb-3" id="optionsBlock">
                             <label class="form-label">Варианты ответа</label>
                             <div id="optionsList">
-                                <div class="option-row mb-2">
+                                <div class="option-row mb-3 border rounded p-3">
                                     <div class="row g-2">
-                                        <div class="col-md-8">
+                                        <div class="col-md-6">
                                             <input type="text" class="form-control option-text" placeholder="Вариант 1" required>
                                         </div>
-                                        <div class="col-md-4">
-                                            <input type="url" class="form-control option-image" placeholder="URL фото">
+                                        <div class="col-md-6">
+                                            <input type="file" class="form-control option-file" accept="image/*" onchange="handleOptionImageUpload(this)">
+                                            <input type="hidden" class="option-image-url" value="">
+                                            <div class="option-image-preview mt-2 d-none">
+                                                <img src="" class="img-thumbnail" style="max-height:80px;" alt="">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="option-row mb-2">
+                                <div class="option-row mb-3 border rounded p-3">
                                     <div class="row g-2">
-                                        <div class="col-md-8">
+                                        <div class="col-md-6">
                                             <input type="text" class="form-control option-text" placeholder="Вариант 2" required>
                                         </div>
-                                        <div class="col-md-4">
-                                            <input type="url" class="form-control option-image" placeholder="URL фото">
+                                        <div class="col-md-6">
+                                            <input type="file" class="form-control option-file" accept="image/*" onchange="handleOptionImageUpload(this)">
+                                            <input type="hidden" class="option-image-url" value="">
+                                            <div class="option-image-preview mt-2 d-none">
+                                                <img src="" class="img-thumbnail" style="max-height:80px;" alt="">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -130,6 +142,60 @@
             }
         });
 
+        // Poll image upload
+        async function handlePollImageUpload() {
+            const fileInput = document.getElementById('pollImageFile');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const result = await uploadFile(file);
+            if (result) {
+                document.getElementById('pollImageUrl').value = result.url;
+                const preview = document.getElementById('pollImagePreview');
+                preview.querySelector('img').src = resolveImageUrl(result.url);
+                preview.classList.remove('d-none');
+            }
+        }
+
+        // Option image upload
+        async function handleOptionImageUpload(fileInput) {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const result = await uploadFile(file);
+            if (result) {
+                const row = fileInput.closest('.option-row');
+                row.querySelector('.option-image-url').value = result.url;
+                const preview = row.querySelector('.option-image-preview');
+                preview.querySelector('img').src = resolveImageUrl(result.url);
+                preview.classList.remove('d-none');
+            }
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/upload/image`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                    },
+                    body: formData
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ message: 'Ошибка загрузки' }));
+                    Toast.error(err.message);
+                    return null;
+                }
+                return await response.json();
+            } catch (e) {
+                Toast.error(e.message);
+                return null;
+            }
+        }
+
         function showAdminTab(tab) {
             document.getElementById('createTab').style.display = tab === 'create' ? 'block' : 'none';
             document.getElementById('manageTab').style.display = tab === 'manage' ? 'block' : 'none';
@@ -154,14 +220,18 @@
             const list = document.getElementById('optionsList');
             const count = list.querySelectorAll('.option-row').length + 1;
             const div = document.createElement('div');
-            div.className = 'option-row mb-2';
+            div.className = 'option-row mb-3 border rounded p-3';
             div.innerHTML = `
                 <div class="row g-2">
-                    <div class="col-md-8">
+                    <div class="col-md-6">
                         <input type="text" class="form-control option-text" placeholder="Вариант ${count}">
                     </div>
-                    <div class="col-md-4">
-                        <input type="url" class="form-control option-image" placeholder="URL фото">
+                    <div class="col-md-6">
+                        <input type="file" class="form-control option-file" accept="image/*" onchange="handleOptionImageUpload(this)">
+                        <input type="hidden" class="option-image-url" value="">
+                        <div class="option-image-preview mt-2 d-none">
+                            <img src="" class="img-thumbnail" style="max-height:80px;" alt="">
+                        </div>
                     </div>
                 </div>
             `;
@@ -174,7 +244,7 @@
                 ? []
                 : Array.from(document.querySelectorAll('.option-row')).map(row => ({
                     text: row.querySelector('.option-text').value,
-                    imageUrl: row.querySelector('.option-image').value || null
+                    imageUrl: row.querySelector('.option-image-url').value || null
                 })).filter(v => v.text.trim() !== '');
 
             const body = {
@@ -196,6 +266,10 @@
                 });
                 Toast.success('Голосование создано (черновик)');
                 document.getElementById('createPollForm').reset();
+                // Reset previews
+                document.getElementById('pollImagePreview').classList.add('d-none');
+                document.querySelectorAll('.option-image-preview').forEach(p => p.classList.add('d-none'));
+                document.querySelectorAll('.option-image-url').forEach(i => i.value = '');
                 onTypeChange();
             } catch (e) {
                 Toast.error(e.message);
@@ -212,11 +286,18 @@
                     return;
                 }
 
-                const rows = polls.map(p => `
+                const rows = polls.map(p => {
+                    const optionsHtml = p.options && p.options.length > 0
+                        ? `<div class="mt-1"><small class="text-muted">Варианты: ${p.options.map(o => o.text).join(', ')}</small></div>`
+                        : '';
+                    return `
                     <tr>
                         <td>
-                            ${p.imageUrl ? `<img src="${p.imageUrl}" class="rounded me-2" style="width:60px;height:40px;object-fit:cover;" alt="">` : ''}
-                            ${p.title}
+                            ${p.imageUrl ? `<img src="${resolveImageUrl(p.imageUrl)}" class="rounded me-2" style="width:60px;height:40px;object-fit:cover;" alt="">` : ''}
+                            <div>
+                                <strong>${p.title}</strong>
+                                ${optionsHtml}
+                            </div>
                         </td>
                         <td><span class="badge bg-${statusBadge(p.status)}">${p.status}</span></td>
                         <td>${getTypeLabel(p.type)}</td>
@@ -228,7 +309,7 @@
                             <button class="btn btn-sm btn-outline-danger" onclick="deletePoll('${p.id}')">Удалить</button>
                         </td>
                     </tr>
-                `).join('');
+                `}).join('');
 
                 container.innerHTML = `
                     <div class="table-responsive">

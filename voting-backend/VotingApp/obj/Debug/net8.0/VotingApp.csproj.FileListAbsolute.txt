@@ -145,3 +145,5 @@
 /home/whqeel/code/diplom/voting-backend/VotingApp/bin/Debug/net8.0/RBush.dll
 /home/whqeel/code/diplom/voting-backend/VotingApp/bin/Debug/net8.0/SixLabors.Fonts.dll
 /home/whqeel/code/diplom/voting-backend/VotingApp/bin/Debug/net8.0/System.IO.Packaging.dll
+/home/whqeel/code/diplom/voting-backend/VotingApp/bin/Debug/net8.0/VotingApp.staticwebassets.runtime.json
+/home/whqeel/code/diplom/voting-backend/VotingApp/obj/Debug/net8.0/VotingApp.sourcelink.json
