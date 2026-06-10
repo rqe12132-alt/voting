@@ -82,6 +82,7 @@ builder.Services.AddScoped<IPollService, PollService>();
 builder.Services.AddScoped<IVoteService, VoteService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IExcelExportService, ExcelExportService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();

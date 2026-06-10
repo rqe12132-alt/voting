@@ -66,9 +66,21 @@ function updateNav() {
 async function initAuth() {
     updateNav();
 
-    if (!isLoggedIn() && !window.location.pathname.includes('/login.html')) {
+    const path = window.location.pathname;
+    const isLoginPage = path.includes('/login.html');
+    const isVerifyPage = path.includes('/verify-email.html');
+
+    if (!isLoggedIn() && !isLoginPage && !isVerifyPage) {
         window.location.href = '/login.html';
         return false;
+    }
+
+    if (isLoggedIn()) {
+        const user = getUser();
+        if (user && !user.emailVerified && !isVerifyPage) {
+            window.location.href = '/verify-email.html';
+            return false;
+        }
     }
 
     return true;

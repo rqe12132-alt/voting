@@ -33,6 +33,11 @@ public class UserRepository : IUserRepository
         return await _context.Users.AnyAsync();
     }
 
+    public async Task<User?> GetByVerificationTokenAsync(string token)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == token);
+    }
+
     public async Task<User> CreateAsync(User user)
     {
         _context.Users.Add(user);

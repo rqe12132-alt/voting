@@ -62,18 +62,20 @@ public class JwtService : IJwtService
 
         _refreshTokenRepository.CreateAsync(refreshToken).Wait();
 
+        var userDto = new UserDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FullName = user.FullName,
+            IsAdmin = user.IsAdmin,
+            EmailVerified = user.EmailVerified
+        };
         return new TokenResponse
         {
             AccessToken = accessToken,
             RefreshToken = refreshTokenValue,
             AccessTokenExpiresAt = accessTokenExpires,
-            User = new UserDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                FullName = user.FullName,
-                IsAdmin = user.IsAdmin
-            }
+            User = userDto
         };
     }
 

@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "F/Z0vMsfD0RvRlFMGeBKTvDag/Qm+8gpx67T7KOgrTQ=",
+  "Hash": "rShlZI7Wr/0COMDJoZK5RkXueTKlp1VKjpz0McrJLSc=",
   "Source": "VotingApp",
   "BasePath": "_content/VotingApp",
   "Mode": "Default",
@@ -16,6 +16,25 @@
     }
   ],
   "Assets": [
+    {
+      "Identity": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/6042e5ea-b6e4-4c0b-8acf-b0e318876c38.jpg",
+      "SourceId": "VotingApp",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/",
+      "BasePath": "_content/VotingApp",
+      "RelativePath": "uploads/6042e5ea-b6e4-4c0b-8acf-b0e318876c38.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/uploads/6042e5ea-b6e4-4c0b-8acf-b0e318876c38.jpg"
+    },
     {
       "Identity": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/77708e30-c3c2-43f5-aca1-9eab1a42b3db.jpg",
       "SourceId": "VotingApp",

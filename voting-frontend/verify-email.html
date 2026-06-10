@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение email — Голосования</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-light">
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow">
+                    <div class="card-body p-4 text-center">
+                        <h2 class="mb-3">Подтверждение email</h2>
+                        <p class="text-muted">Введите 6-значный код, отправленный на ваш email</p>
+
+                        <div id="messageArea" class="mb-3"></div>
+
+                        <div id="formArea">
+                            <div class="mb-3">
+                                <input type="email" class="form-control" id="verifyEmail" placeholder="Email" value="">
+                            </div>
+                            <div class="mb-3">
+                                <input type="text" class="form-control text-center" id="verifyCode" placeholder="______" maxlength="6" inputmode="numeric" autocomplete="one-time-code" style="font-size: 1.5rem; letter-spacing: 8px;">
+                            </div>
+                            <button class="btn btn-primary w-100 mb-2" onclick="submitCode()">Подтвердить</button>
+                        </div>
+
+                        <div id="resendArea" class="mt-3">
+                            <p class="text-muted small">Не получили письмо?</p>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="resendCode()">Отправить код повторно</button>
+                            <p class="mt-2 small"><a href="http://localhost:8025" target="_blank">Открыть MailHog (локальная почта)</a></p>
+                        </div>
+
+                        <div id="successActions" class="mt-3" style="display:none">
+                            <a href="/index.html" class="btn btn-primary">Перейти к голосованиям</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/toast.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        function init() {
+            const user = getUser();
+            if (user && user.email) {
+                document.getElementById('verifyEmail').value = user.email;
+            }
+            // Auto-focus code input
+            document.getElementById('verifyCode').focus();
+        }
+
+        function showAreaMessage(html, type) {
+            const area = document.getElementById('messageArea');
+            area.innerHTML = '<div class="alert alert-' + type + '">' + html + '</div>';
+        }
+
+        function clearAreaMessage() {
+            document.getElementById('messageArea').innerHTML = '';
+        }
+
+        async function submitCode() {
+            clearAreaMessage();
+            const email = document.getElementById('verifyEmail').value.trim();
+            const code = document.getElementById('verifyCode').value.trim();
+
+            if (!email) {
+                showAreaMessage('Введите email', 'warning');
+                return;
+            }
+            if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+                showAreaMessage('Введите 6-значный код из письма', 'warning');
+                return;
+            }
+
+            try {
+                const result = await api('/auth/verify', {
+                    method: 'POST',
+                    body: { email, code }
+                });
+                showAreaMessage(result.message, 'success');
+                document.getElementById('formArea').style.display = 'none';
+                document.getElementById('resendArea').style.display = 'none';
+                document.getElementById('successActions').style.display = 'block';
+                if (getUser()) {
+                    const user = getUser();
+                    user.emailVerified = true;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+            } catch (e) {
+                showAreaMessage(e.message, 'danger');
+            }
+        }
+
+        async function resendCode() {
+            const email = document.getElementById('verifyEmail').value.trim();
+            if (!email) {
+                showAreaMessage('Введите email для повторной отправки', 'warning');
+                return;
+            }
+            try {
+                const result = await api('/auth/resend-email', {
+                    method: 'POST',
+                    body: { email }
+                });
+                showAreaMessage(result.message, 'success');
+            } catch (e) {
+                showAreaMessage(e.message, 'danger');
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('verifyCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') submitCode();
+        });
+
+        init();
+    </script>
+</body>
+</html>

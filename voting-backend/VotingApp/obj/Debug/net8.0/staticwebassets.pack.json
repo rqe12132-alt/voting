@@ -1,6 +1,10 @@
 {
   "Files": [
     {
+      "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/6042e5ea-b6e4-4c0b-8acf-b0e318876c38.jpg",
+      "PackagePath": "staticwebassets/uploads/6042e5ea-b6e4-4c0b-8acf-b0e318876c38.jpg"
+    },
+    {
       "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/77708e30-c3c2-43f5-aca1-9eab1a42b3db.jpg",
       "PackagePath": "staticwebassets/uploads/77708e30-c3c2-43f5-aca1-9eab1a42b3db.jpg"
     },

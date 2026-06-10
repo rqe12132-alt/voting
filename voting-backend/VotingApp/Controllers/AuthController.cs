@@ -66,6 +66,45 @@ public class AuthController : ControllerBase
         return Ok(user);
     }
 
+    [HttpPost("verify")]
+    [AllowAnonymous]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Code))
+        {
+            return BadRequest(new { message = "Email и код подтверждения обязательны" });
+        }
+
+        if (request.Code.Length != 6 || !request.Code.All(char.IsDigit))
+        {
+            return BadRequest(new { message = "Код подтверждения должен состоять из 6 цифр" });
+        }
+
+        var result = await _authService.VerifyEmailAsync(request.Email, request.Code);
+        if (result)
+        {
+            return Ok(new { message = "Email успешно подтвержден" });
+        }
+        return BadRequest(new { message = "Неверный или просроченный код подтверждения" });
+    }
+
+    [HttpPost("resend-email")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResendEmail([FromBody] ResendEmailRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Email))
+        {
+            return BadRequest(new { message = "Email не указан" });
+        }
+
+        var result = await _authService.ResendVerificationEmailAsync(request.Email);
+        if (result)
+        {
+            return Ok(new { message = "Письмо с подтверждением отправлено повторно" });
+        }
+        return BadRequest(new { message = "Пользователь не найден или email уже подтвержден" });
+    }
+
     private Guid? GetUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value

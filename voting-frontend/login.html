@@ -135,8 +135,13 @@
                     body: { email, password }
                 });
                 setAuth(result);
-                showMessage('Успешный вход! Перенаправление...', 'success');
-                setTimeout(() => window.location.href = '/index.html', 800);
+                if (result.user && !result.user.emailVerified) {
+                    showMessage('Вход выполнен. Подтвердите email, чтобы продолжить.', 'warning');
+                    setTimeout(() => window.location.href = '/verify-email.html', 800);
+                } else {
+                    showMessage('Успешный вход! Перенаправление...', 'success');
+                    setTimeout(() => window.location.href = '/index.html', 800);
+                }
             } catch (e) {
                 showMessage(e.message, 'danger');
             }
@@ -173,8 +178,8 @@
                     body: { fullName, email, password, adminCode }
                 });
                 setAuth(result);
-                showMessage('Регистрация успешна! Перенаправление...', 'success');
-                setTimeout(() => window.location.href = '/index.html', 800);
+                showMessage('Регистрация успешна! Проверьте письмо с кодом подтверждения.', 'success');
+                setTimeout(() => window.location.href = '/verify-email.html', 1200);
             } catch (e) {
                 showMessage(e.message, 'danger');
             }

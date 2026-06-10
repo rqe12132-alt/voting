@@ -147,3 +147,6 @@
 /home/whqeel/code/diplom/voting-backend/VotingApp/bin/Debug/net8.0/System.IO.Packaging.dll
 /home/whqeel/code/diplom/voting-backend/VotingApp/bin/Debug/net8.0/VotingApp.staticwebassets.runtime.json
 /home/whqeel/code/diplom/voting-backend/VotingApp/obj/Debug/net8.0/VotingApp.sourcelink.json
+/home/whqeel/code/diplom/voting-backend/VotingApp/bin/Debug/net8.0/BouncyCastle.Cryptography.dll
+/home/whqeel/code/diplom/voting-backend/VotingApp/bin/Debug/net8.0/MailKit.dll
+/home/whqeel/code/diplom/voting-backend/VotingApp/bin/Debug/net8.0/MimeKit.dll

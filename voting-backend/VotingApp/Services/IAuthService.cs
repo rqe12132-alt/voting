@@ -10,4 +10,6 @@ public interface IAuthService
     Task<TokenResponse?> RefreshTokensAsync(string refreshToken);
     Task RevokeTokensAsync(string refreshToken);
     Task<UserDto?> GetCurrentUserAsync(Guid userId);
+    Task<bool> VerifyEmailAsync(string email, string code);
+    Task<bool> ResendVerificationEmailAsync(string email);
 }
