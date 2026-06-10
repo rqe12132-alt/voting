@@ -57,6 +57,7 @@
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">${poll.title}</h5>
                                 <p class="card-text text-muted small">${poll.type === 'SingleChoice' ? 'Один вариант' : poll.type === 'MultipleChoice' ? 'Несколько' : 'Да / Нет'}</p>
+                                <p class="card-text text-muted small">${poll.endsAt ? 'До ' + formatDate(poll.endsAt) : ''}</p>
                                 <a href="/poll.html?id=${poll.id}" class="btn btn-outline-primary mt-auto">Посмотреть результаты</a>
                             </div>
                         </div>

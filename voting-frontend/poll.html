@@ -51,6 +51,10 @@
                                 ${pollData.imageUrl ? `<img src="${resolveImageUrl(pollData.imageUrl)}" class="img-fluid rounded poll-hero-image mb-3" alt="${pollData.title}">` : ''}
                                 <h2>${pollData.title}</h2>
                                 ${pollData.description ? `<p class="text-muted">${pollData.description}</p>` : ''}
+                                <div class="d-flex justify-content-center gap-3 text-muted small">
+                                    ${pollData.startsAt ? `<span>Начало: ${formatDateTime(pollData.startsAt)}</span>` : ''}
+                                    ${pollData.endsAt ? `<span>Окончание: ${formatDateTime(pollData.endsAt)}</span>` : ''}
+                                </div>
                             </div>
                             <div id="resultsBlock"></div>
                             <div id="voteFormBlock"></div>

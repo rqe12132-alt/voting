@@ -9,6 +9,7 @@ public class PollListItemDto
     public bool IsRealtime { get; set; }
     public bool HasVoted { get; set; }
     public string? ImageUrl { get; set; }
+    public DateTime? StartsAt { get; set; }
     public DateTime? EndsAt { get; set; }
     public DateTime CreatedAt { get; set; }
 }

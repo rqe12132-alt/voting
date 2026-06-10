@@ -106,15 +106,55 @@
                             </div>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Начало (опционально)</label>
-                                <input type="datetime-local" class="form-control" id="pollStartsAt">
+                            <div class="col-md-3">
+                                <label class="form-label">Дата начала</label>
+                                <input type="text" class="form-control" id="pollStartDate" placeholder="дд.мм.гггг" maxlength="10" autocomplete="off">
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Окончание (опционально)</label>
-                                <input type="datetime-local" class="form-control" id="pollEndsAt">
+                            <div class="col-md-3">
+                                <label class="form-label">Время начала</label>
+                                <input type="text" class="form-control" id="pollStartTime" placeholder="HH:MM" maxlength="5" autocomplete="off">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Дата окончания</label>
+                                <input type="text" class="form-control" id="pollEndDate" placeholder="дд.мм.гггг" maxlength="10" autocomplete="off">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Время окончания</label>
+                                <input type="text" class="form-control" id="pollEndTime" placeholder="HH:MM" maxlength="5" autocomplete="off">
                             </div>
                         </div>
+                        <script>
+                            (function() {
+                                function fmtDate(el) {
+                                    let v = el.value.replace(/\D/g, '');
+                                    if (v.length >= 2) v = v.slice(0, 2) + '.' + v.slice(2);
+                                    if (v.length >= 5) v = v.slice(0, 5) + '.' + v.slice(5);
+                                    if (v.length > 10) v = v.slice(0, 10);
+                                    el.value = v;
+                                }
+                                function fmtTime(el) {
+                                    let v = el.value.replace(/\D/g, '');
+                                    if (v.length >= 2) v = v.slice(0, 2) + ':' + v.slice(2);
+                                    if (v.length > 5) v = v.slice(0, 5);
+                                    el.value = v;
+                                }
+                                ['pollStartDate', 'pollEndDate'].forEach(id => {
+                                    const el = document.getElementById(id);
+                                    if (el) {
+                                        el.addEventListener('input', () => fmtDate(el));
+                                        el.addEventListener('blur', () => fmtDate(el));
+                                    }
+                                });
+                                ['pollStartTime', 'pollEndTime'].forEach(id => {
+                                    const el = document.getElementById(id);
+                                    if (el) {
+                                        el.addEventListener('input', () => fmtTime(el));
+                                        el.addEventListener('blur', () => fmtTime(el));
+                                    }
+                                });
+                            })();
+                        </script>
+                        <div id="dateError" class="text-danger mb-3" style="display:none"></div>
                         <button type="submit" class="btn btn-success">Сохранить черновик</button>
                     </form>
                     <div id="createMsg" class="mt-3"></div>
@@ -247,6 +287,85 @@
                     imageUrl: row.querySelector('.option-image-url').value || null
                 })).filter(v => v.text.trim() !== '');
 
+            const startDateStr = document.getElementById('pollStartDate').value.trim() || null;
+            const startTimeStr = document.getElementById('pollStartTime').value.trim() || null;
+            const endDateStr = document.getElementById('pollEndDate').value.trim() || null;
+            const endTimeStr = document.getElementById('pollEndTime').value.trim() || null;
+            const dateErrorEl = document.getElementById('dateError');
+            dateErrorEl.style.display = 'none';
+            dateErrorEl.textContent = '';
+
+            function parseDate(str) {
+                if (!str) return null;
+                const parts = str.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+                if (!parts) return null;
+                return `${parts[3]}-${parts[2]}-${parts[1]}`;
+            }
+            function parseTime(str) {
+                if (!str) return null;
+                const parts = str.match(/^(\d{2}):(\d{2})$/);
+                if (!parts) return null;
+                const h = parseInt(parts[1], 10);
+                const m = parseInt(parts[2], 10);
+                if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+                return `${parts[1]}:${parts[2]}`;
+            }
+            function isDateInFuture(dateStr, timeStr) {
+                if (!dateStr || !timeStr) return true;
+                const d = new Date(`${dateStr}T${timeStr}`);
+                return d >= new Date();
+            }
+
+            const startDate = parseDate(startDateStr);
+            const startTime = parseTime(startTimeStr);
+            const endDate = parseDate(endDateStr);
+            const endTime = parseTime(endTimeStr);
+
+            if (startDateStr && !startDate) {
+                dateErrorEl.textContent = 'Неверный формат даты начала. Используйте дд.мм.гггг';
+                dateErrorEl.style.display = 'block';
+                return;
+            }
+            if (startTimeStr && !startTime) {
+                dateErrorEl.textContent = 'Неверный формат времени начала. Используйте HH:MM (24-часовой)';
+                dateErrorEl.style.display = 'block';
+                return;
+            }
+            if (endDateStr && !endDate) {
+                dateErrorEl.textContent = 'Неверный формат даты окончания. Используйте дд.мм.гггг';
+                dateErrorEl.style.display = 'block';
+                return;
+            }
+            if (endTimeStr && !endTime) {
+                dateErrorEl.textContent = 'Неверный формат времени окончания. Используйте HH:MM (24-часовой)';
+                dateErrorEl.style.display = 'block';
+                return;
+            }
+
+            if (startDate && startTime && !isDateInFuture(startDate, startTime)) {
+                dateErrorEl.textContent = 'Дата начала не может быть в прошлом';
+                dateErrorEl.style.display = 'block';
+                return;
+            }
+            if (endDate && endTime && !isDateInFuture(endDate, endTime)) {
+                dateErrorEl.textContent = 'Дата окончания не может быть в прошлом';
+                dateErrorEl.style.display = 'block';
+                return;
+            }
+
+            const startsAt = (startDate && startTime) ? `${startDate}T${startTime}` : null;
+            const endsAt = (endDate && endTime) ? `${endDate}T${endTime}` : null;
+
+            if (startsAt && endsAt) {
+                const start = new Date(startsAt);
+                const end = new Date(endsAt);
+                if (end <= start) {
+                    dateErrorEl.textContent = 'Дата окончания должна быть позже даты начала';
+                    dateErrorEl.style.display = 'block';
+                    return;
+                }
+            }
+
             const body = {
                 title: document.getElementById('pollTitle').value,
                 description: document.getElementById('pollDescription').value,
@@ -255,8 +374,8 @@
                 options: options,
                 resultsVisibility: document.getElementById('pollVisibility').value,
                 isRealtime: document.getElementById('pollRealtime').checked,
-                startsAt: document.getElementById('pollStartsAt').value || null,
-                endsAt: document.getElementById('pollEndsAt').value || null
+                startsAt: startsAt,
+                endsAt: endsAt
             };
 
             try {
@@ -292,6 +411,7 @@
                         : '';
                     return `
                     <tr>
+                        <td class="text-center"><input class="form-check-input poll-select" type="checkbox" value="${p.id}"></td>
                         <td>
                             ${p.imageUrl ? `<img src="${resolveImageUrl(p.imageUrl)}" class="rounded me-2" style="width:60px;height:40px;object-fit:cover;" alt="">` : ''}
                             <div>
@@ -301,7 +421,8 @@
                         </td>
                         <td><span class="badge bg-${statusBadge(p.status)}">${p.status}</span></td>
                         <td>${getTypeLabel(p.type)}</td>
-                        <td>${new Date(p.createdAt).toLocaleDateString()}</td>
+                        <td>${formatDate(p.createdAt)}</td>
+                        <td>${p.endsAt ? formatDateTime(p.endsAt) : 'Без срока'}</td>
                         <td>
                             ${p.status === 'Draft' ? `<button class="btn btn-sm btn-success me-1" onclick="publishPoll('${p.id}')">Опубликовать</button>` : ''}
                             ${p.status === 'Active' ? `<button class="btn btn-sm btn-warning me-1" onclick="closePoll('${p.id}')">Закрыть</button>` : ''}
@@ -314,15 +435,29 @@
                 `}).join('');
 
                 container.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllPolls" onchange="toggleSelectAll()">
+                            <label class="form-check-label" for="selectAllPolls">Выбрать все</label>
+                        </div>
+                        <button class="btn btn-sm btn-danger" id="deleteSelectedBtn" onclick="deleteSelectedPolls()" disabled>
+                            Удалить выбранные (<span id="selectedCount">0</span>)
+                        </button>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead class="table-light">
-                                <tr><th>Название</th><th>Статус</th><th>Тип</th><th>Создано</th><th>Действия</th></tr>
+                                <tr><th class="text-center" style="width:40px"><input class="form-check-input" type="checkbox" id="selectAllHeader" onchange="toggleSelectAll()"></th><th>Название</th><th>Статус</th><th>Тип</th><th>Создано</th><th>Срок</th><th>Действия</th></tr>
                             </thead>
                             <tbody>${rows}</tbody>
                         </table>
                     </div>
                 `;
+
+                // Attach change listeners to row checkboxes
+                document.querySelectorAll('.poll-select').forEach(cb => {
+                    cb.addEventListener('change', updateSelectedCount);
+                });
             } catch (e) {
                 Toast.error(e.message);
             }
@@ -390,6 +525,54 @@
             } catch (e) {
                 Toast.error(e.message);
             }
+        }
+
+        function getSelectedPollIds() {
+            return Array.from(document.querySelectorAll('.poll-select:checked')).map(cb => cb.value);
+        }
+
+        function updateSelectedCount() {
+            const count = getSelectedPollIds().length;
+            const btn = document.getElementById('deleteSelectedBtn');
+            const label = document.getElementById('selectedCount');
+            if (btn && label) {
+                label.textContent = count;
+                btn.disabled = count === 0;
+            }
+            const all = document.querySelectorAll('.poll-select');
+            const checked = document.querySelectorAll('.poll-select:checked');
+            const header = document.getElementById('selectAllHeader');
+            const allCb = document.getElementById('selectAllPolls');
+            if (header) header.checked = all.length > 0 && all.length === checked.length;
+            if (allCb) allCb.checked = all.length > 0 && all.length === checked.length;
+        }
+
+        function toggleSelectAll() {
+            const checked = document.getElementById('selectAllHeader').checked;
+            document.querySelectorAll('.poll-select').forEach(cb => cb.checked = checked);
+            updateSelectedCount();
+        }
+
+        async function deleteSelectedPolls() {
+            const ids = getSelectedPollIds();
+            if (ids.length === 0) return;
+            if (!confirm(`Удалить ${ids.length} голосований? Это действие нельзя отменить.`)) return;
+            let deleted = 0;
+            let errors = 0;
+            for (const id of ids) {
+                try {
+                    await api(`/admin/polls/${id}`, { method: 'DELETE' });
+                    deleted++;
+                } catch (e) {
+                    errors++;
+                }
+            }
+            if (errors === 0) {
+                Toast.success(`${deleted} голосований удалено`);
+            } else {
+                Toast.warning(`Удалено: ${deleted}, ошибок: ${errors}`);
+            }
+            loadManagePolls();
         }
 
         async function deletePoll(id) {

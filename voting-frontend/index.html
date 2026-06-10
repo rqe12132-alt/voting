@@ -132,12 +132,12 @@
                                  class="card-img-top poll-image" alt="${poll.title}">
                             <div class="poll-image-overlay"></div>
                             <span class="badge bg-${getTypeBadge(poll.type)} poll-type-badge">${getTypeLabel(poll.type)}</span>
-                            ${poll.isRealtime ? '<span class="badge bg-danger poll-live-badge">LIVE</span>' : ''}
                             ${poll.status === 'Closed' ? '<span class="badge bg-dark poll-closed-badge">ЗАВЕРШЕНО</span>' : ''}
+                            ${poll.startsAt && new Date(poll.startsAt) > new Date() ? '<span class="badge bg-info poll-planned-badge">СКОРО</span>' : (poll.isRealtime ? '<span class="badge bg-danger poll-live-badge">LIVE</span>' : '')}
                         </div>
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title">${poll.title}</h5>
-                            <p class="card-text text-muted small">${poll.endsAt ? 'До ' + new Date(poll.endsAt).toLocaleDateString() : 'Без срока окончания'}</p>
+                            <p class="card-text text-muted small">${poll.endsAt ? 'До ' + formatDate(poll.endsAt) : 'Без срока окончания'}</p>
                             ${poll.hasVoted
                                 ? `<div class="alert alert-success py-2 mb-2"><small>Вы уже проголосовали</small></div>
                                    <a href="/poll.html?id=${poll.id}" class="btn btn-outline-primary mt-auto">Посмотреть результаты</a>`

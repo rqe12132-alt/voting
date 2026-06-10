@@ -15,11 +15,39 @@ public class PollService : IPollService
         _voteRepository = voteRepository;
     }
 
+    private string? ValidateDates(DateTime? startsAt, DateTime? endsAt)
+    {
+        var now = DateTime.UtcNow;
+
+        if (startsAt.HasValue && startsAt.Value < now)
+        {
+            return "Дата начала голосования не может быть в прошлом";
+        }
+
+        if (endsAt.HasValue && endsAt.Value < now)
+        {
+            return "Дата окончания голосования не может быть в прошлом";
+        }
+
+        if (startsAt.HasValue && endsAt.HasValue && endsAt.Value <= startsAt.Value)
+        {
+            return "Дата окончания должна быть позже даты начала";
+        }
+
+        return null;
+    }
+
     public async Task<PollResponse?> CreatePollAsync(Guid userId, CreatePollRequest request)
     {
         if (!Enum.TryParse<PollType>(request.Type, out var pollType))
         {
             return null;
+        }
+
+        var dateError = ValidateDates(request.StartsAt, request.EndsAt);
+        if (dateError != null)
+        {
+            throw new ArgumentException(dateError);
         }
 
         if (!Enum.TryParse<ResultsVisibility>(request.ResultsVisibility, out var visibility))
@@ -70,6 +98,12 @@ public class PollService : IPollService
         if (poll == null || poll.Status != PollStatus.Draft)
         {
             return null;
+        }
+
+        var dateError = ValidateDates(request.StartsAt, request.EndsAt);
+        if (dateError != null)
+        {
+            throw new ArgumentException(dateError);
         }
 
         poll.Title = request.Title;
@@ -228,7 +262,7 @@ public class PollService : IPollService
             StartsAt = poll.StartsAt,
             EndsAt = poll.EndsAt,
             ImageUrl = poll.ImageUrl,
-            CreatedAt = poll.CreatedAt,
+            CreatedAt = DateTime.SpecifyKind(poll.CreatedAt, DateTimeKind.Utc),
             Options = poll.Options.Select(o => new PollOptionDto
             {
                 Id = o.Id,
@@ -249,8 +283,9 @@ public class PollService : IPollService
             Status = poll.Status.ToString(),
             IsRealtime = poll.IsRealtime,
             ImageUrl = poll.ImageUrl,
+            StartsAt = poll.StartsAt,
             EndsAt = poll.EndsAt,
-            CreatedAt = poll.CreatedAt
+            CreatedAt = DateTime.SpecifyKind(poll.CreatedAt, DateTimeKind.Utc)
         };
     }
 }

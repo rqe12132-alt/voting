@@ -37,7 +37,12 @@ public class AuditService : IAuditService
     public async Task<List<AuditLog>> GetAllAsync(int page, int pageSize)
     {
         var skip = (page - 1) * pageSize;
-        return await _repository.GetAllAsync(skip, pageSize);
+        var logs = await _repository.GetAllAsync(skip, pageSize);
+        foreach (var log in logs)
+        {
+            log.CreatedAt = DateTime.SpecifyKind(log.CreatedAt, DateTimeKind.Utc);
+        }
+        return logs;
     }
 
     public async Task<int> CountAsync()

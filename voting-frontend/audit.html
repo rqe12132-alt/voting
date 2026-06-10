@@ -74,7 +74,7 @@
                 } else {
                     tbody.innerHTML = logs.map(log => `
                         <tr>
-                            <td>${new Date(log.createdAt).toLocaleString()}</td>
+                            <td>${formatDateTime(log.createdAt)}</td>
                             <td>${log.userEmail || 'Система'}</td>
                             <td><span class="badge bg-${actionColor(log.action)}">${log.action}</span></td>
                             <td>${log.entityType} ${log.entityId ? '(' + log.entityId.substring(0, 8) + '...)' : ''}</td>

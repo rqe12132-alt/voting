@@ -133,7 +133,7 @@ public class VoteService : IVoteService
         {
             PollId = pollId,
             OptionIds = myVotes,
-            VotedAt = vote.CreatedAt
+            VotedAt = DateTime.SpecifyKind(vote.CreatedAt, DateTimeKind.Utc)
         };
     }
 }

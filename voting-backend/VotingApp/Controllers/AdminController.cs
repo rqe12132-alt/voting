@@ -31,14 +31,21 @@ public class AdminController : ControllerBase
         var email = GetUserEmail();
         if (!userId.HasValue) return Unauthorized();
 
-        var poll = await _pollService.CreatePollAsync(userId.Value, request);
-        if (poll == null)
+        try
         {
-            return BadRequest(new { message = "Ошибка создания голосования" });
-        }
+            var poll = await _pollService.CreatePollAsync(userId.Value, request);
+            if (poll == null)
+            {
+                return BadRequest(new { message = "Ошибка создания голосования" });
+            }
 
-        await _auditService.LogAsync(userId, email ?? "", "CREATE", "Poll", poll.Id.ToString(), $"Создано голосование: {poll.Title}");
-        return Ok(poll);
+            await _auditService.LogAsync(userId, email ?? "", "CREATE", "Poll", poll.Id.ToString(), $"Создано голосование: {poll.Title}");
+            return Ok(poll);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpGet("polls")]
@@ -60,9 +67,16 @@ public class AdminController : ControllerBase
             return BadRequest(new { message = "Редактирование доступно только для черновиков" });
         }
 
-        var poll = await _pollService.UpdatePollAsync(id, request);
-        if (poll == null) return NotFound();
-        return Ok(poll);
+        try
+        {
+            var poll = await _pollService.UpdatePollAsync(id, request);
+            if (poll == null) return NotFound();
+            return Ok(poll);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("polls/{id:guid}/publish")]
