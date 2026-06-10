@@ -110,6 +110,27 @@ public class PollService : IPollService
         return true;
     }
 
+    public async Task<bool> ClosePollAsync(Guid pollId)
+    {
+        var poll = await _pollRepository.GetByIdAsync(pollId);
+        if (poll == null || poll.Status != PollStatus.Active) return false;
+
+        poll.Status = PollStatus.Closed;
+        await _pollRepository.UpdateAsync(poll);
+        return true;
+    }
+
+    public async Task<bool> ExtendPollAsync(Guid pollId, DateTime? newEndsAt)
+    {
+        var poll = await _pollRepository.GetByIdAsync(pollId);
+        if (poll == null) return false;
+        if (poll.Status != PollStatus.Active && poll.Status != PollStatus.Draft) return false;
+
+        poll.EndsAt = newEndsAt;
+        await _pollRepository.UpdateAsync(poll);
+        return true;
+    }
+
     public async Task<bool> DeletePollAsync(Guid pollId)
     {
         var poll = await _pollRepository.GetByIdAsync(pollId);

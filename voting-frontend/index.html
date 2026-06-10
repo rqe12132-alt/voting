@@ -87,7 +87,6 @@
                 renderPolls();
 
                 document.getElementById('loadMoreBtn').style.display = hasMore ? 'inline-block' : 'none';
-                document.getElementById('closedToggleContainer').style.display = showClosed ? 'none' : 'block';
             } catch (e) {
                 Toast.error(e.message);
                 document.getElementById('pollsList').innerHTML = `<div class="col-12"><div class="alert alert-danger">${e.message}</div></div>`;

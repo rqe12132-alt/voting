@@ -80,6 +80,36 @@ public class AdminController : ControllerBase
         return Ok(new { message = "Голосование опубликовано" });
     }
 
+    [HttpPost("polls/{id:guid}/close")]
+    public async Task<IActionResult> ClosePoll(Guid id)
+    {
+        if (!IsAdmin()) return Forbid();
+
+        var userId = GetUserId();
+        var email = GetUserEmail();
+
+        var success = await _pollService.ClosePollAsync(id);
+        if (!success) return BadRequest(new { message = "Ошибка закрытия. Возможно, голосование уже закрыто или не активно." });
+
+        await _auditService.LogAsync(userId, email ?? "", "CLOSE", "Poll", id.ToString(), "Голосование закрыто вручную");
+        return Ok(new { message = "Голосование закрыто" });
+    }
+
+    [HttpPost("polls/{id:guid}/extend")]
+    public async Task<IActionResult> ExtendPoll(Guid id, [FromBody] ExtendPollRequest request)
+    {
+        if (!IsAdmin()) return Forbid();
+
+        var userId = GetUserId();
+        var email = GetUserEmail();
+
+        var success = await _pollService.ExtendPollAsync(id, request.EndsAt);
+        if (!success) return BadRequest(new { message = "Ошибка продления. Возможно, голосование уже закрыто." });
+
+        await _auditService.LogAsync(userId, email ?? "", "EXTEND", "Poll", id.ToString(), $"Голосование продлено до: {request.EndsAt?.ToString("dd.MM.yyyy HH:mm") ?? "без срока"}");
+        return Ok(new { message = "Срок голосования обновлен" });
+    }
+
     [HttpDelete("polls/{id:guid}")]
     public async Task<IActionResult> DeletePoll(Guid id)
     {

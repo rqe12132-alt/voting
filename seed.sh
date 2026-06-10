@@ -9,7 +9,7 @@ NUM_USERS="${2:-15}"
 
 if [ -z "$POLL_ID" ]; then
     echo "Usage: $0 <POLL_ID> [NUM_USERS]"
-    echo "Example: $0 3e04fca3-c0de-4b7e-b504-08debb3ec3a6 20"
+    echo "Example: $0 7df0e9e7-0a6f-492a-403f-08dec52ce2bb 20"
     exit 1
 fi
 
@@ -20,20 +20,46 @@ echo "Poll ID: $POLL_ID"
 echo "Users to create: $NUM_USERS"
 echo ""
 
-# 1. Get poll options
-POLL_DATA=$(curl -s "$API/polls/$POLL_ID")
+# 1. Register a master user to get a token
+MASTER_EMAIL="seedmaster@demo.local"
+MASTER_RESP=$(curl -s -X POST "$API/auth/register" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\":\"$MASTER_EMAIL\",\"password\":\"SeedPass123!\",\"fullName\":\"Seed Master\"}")
+
+MASTER_TOKEN=$(echo "$MASTER_RESP" | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4)
+
+# If registration failed, try login
+if [ -z "$MASTER_TOKEN" ]; then
+    MASTER_RESP=$(curl -s -X POST "$API/auth/login" \
+        -H "Content-Type: application/json" \
+        -d "{\"email\":\"$MASTER_EMAIL\",\"password\":\"SeedPass123!\"}")
+    MASTER_TOKEN=$(echo "$MASTER_RESP" | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4)
+fi
+
+if [ -z "$MASTER_TOKEN" ]; then
+    echo "ERROR: Could not register or login master user. Backend running?"
+    exit 1
+fi
+
+echo "Master user OK"
+
+# 2. Get poll options with token
+POLL_DATA=$(curl -s "$API/polls/$POLL_ID" \
+    -H "Authorization: Bearer $MASTER_TOKEN")
+
 OPTIONS=$(echo "$POLL_DATA" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
     for opt in data.get('options', []):
         print(f\"{opt['id']}|{opt['text']}\")
-except:
+except Exception as e:
     pass
 ")
 
 if [ -z "$OPTIONS" ]; then
-    echo "ERROR: Could not fetch poll options. Is the backend running?"
+    echo "ERROR: Could not fetch poll options. Is the poll ID correct?"
+    echo "Response: $POLL_DATA"
     exit 1
 fi
 
@@ -52,7 +78,7 @@ for i in "${!OPTION_IDS[@]}"; do
 done
 echo ""
 
-# 2. Create users and vote
+# 3. Create users and vote
 VOTES=()
 for ((i=0; i<NUM_OPTIONS; i++)); do
     VOTES+=(0)
@@ -85,7 +111,7 @@ for i in $(seq 1 $NUM_USERS); do
         -H "Authorization: Bearer $TOKEN" \
         -d "{\"optionIds\":[\"$OPTION_ID\"]}")
     
-    VOTES[$RAND_IDX]=$((VOTES[RAND_IDX] + 1))
+    VOTES[$RAND_IDX]=$((VOTES[$RAND_IDX] + 1))
     echo "  [$i/$NUM_USERS] $EMAIL -> voted for [$OPTION_NAME]"
 done
 

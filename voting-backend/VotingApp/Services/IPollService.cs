@@ -8,6 +8,8 @@ public interface IPollService
     Task<PollResponse?> CreatePollAsync(Guid userId, CreatePollRequest request);
     Task<PollResponse?> UpdatePollAsync(Guid pollId, UpdatePollRequest request);
     Task<bool> PublishPollAsync(Guid pollId);
+    Task<bool> ClosePollAsync(Guid pollId);
+    Task<bool> ExtendPollAsync(Guid pollId, DateTime? newEndsAt);
     Task<bool> DeletePollAsync(Guid pollId);
     Task<PollResponse?> GetPollByIdAsync(Guid id);
     Task<List<PollListItemDto>> GetActivePollsAsync(Guid? userId = null);

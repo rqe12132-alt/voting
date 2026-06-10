@@ -1,0 +1,33 @@
+{
+  "Files": [
+    {
+      "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/77708e30-c3c2-43f5-aca1-9eab1a42b3db.jpg",
+      "PackagePath": "staticwebassets/uploads/77708e30-c3c2-43f5-aca1-9eab1a42b3db.jpg"
+    },
+    {
+      "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/8e302b5c-e899-482c-b266-ea3f6f6bea90.jpg",
+      "PackagePath": "staticwebassets/uploads/8e302b5c-e899-482c-b266-ea3f6f6bea90.jpg"
+    },
+    {
+      "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/cf281375-4b86-407e-9efa-040fb85160b8.jpg",
+      "PackagePath": "staticwebassets/uploads/cf281375-4b86-407e-9efa-040fb85160b8.jpg"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.VotingApp.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.VotingApp.props",
+      "PackagePath": "build\\VotingApp.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.VotingApp.props",
+      "PackagePath": "buildMultiTargeting\\VotingApp.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.VotingApp.props",
+      "PackagePath": "buildTransitive\\VotingApp.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

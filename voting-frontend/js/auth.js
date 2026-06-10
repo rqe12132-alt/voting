@@ -36,7 +36,6 @@ function updateNav() {
     if (isAdminUser) {
         adminLinks = `
             <li class="nav-item"><a class="nav-link" href="/admin.html">Админка</a></li>
-            <li class="nav-item"><a class="nav-link" href="/audit.html">Аудит</a></li>
         `;
     }
 
@@ -48,7 +47,6 @@ function updateNav() {
             </button>
             <div class="collapse navbar-collapse" id="navCollapse">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="/index.html">Главная</a></li>
                     ${user ? `<li class="nav-item"><a class="nav-link" href="/history.html">История</a></li>` : ''}
                     ${adminLinks}
                 </ul>

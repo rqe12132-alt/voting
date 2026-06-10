@@ -304,6 +304,8 @@
                         <td>${new Date(p.createdAt).toLocaleDateString()}</td>
                         <td>
                             ${p.status === 'Draft' ? `<button class="btn btn-sm btn-success me-1" onclick="publishPoll('${p.id}')">Опубликовать</button>` : ''}
+                            ${p.status === 'Active' ? `<button class="btn btn-sm btn-warning me-1" onclick="closePoll('${p.id}')">Закрыть</button>` : ''}
+                            ${p.status === 'Active' || p.status === 'Closed' ? `<button class="btn btn-sm btn-outline-secondary me-1" onclick="extendPoll('${p.id}')">Продлить</button>` : ''}
                             ${p.status === 'Active' || p.status === 'Closed' ? `<a class="btn btn-sm btn-outline-primary me-1" href="/poll.html?id=${p.id}" target="_blank">Результаты</a>` : ''}
                             <button class="btn btn-sm btn-outline-info me-1" onclick="exportPoll('${p.id}')">Excel</button>
                             <button class="btn btn-sm btn-outline-danger" onclick="deletePoll('${p.id}')">Удалить</button>
@@ -349,6 +351,41 @@
             try {
                 await api(`/admin/polls/${id}/publish`, { method: 'POST' });
                 Toast.success('Голосование опубликовано');
+                loadManagePolls();
+            } catch (e) {
+                Toast.error(e.message);
+            }
+        }
+
+        async function closePoll(id) {
+            if (!confirm('Закрыть голосование? После закрытия голосование станет неактивным.')) return;
+            try {
+                await api(`/admin/polls/${id}/close`, { method: 'POST' });
+                Toast.success('Голосование закрыто');
+                loadManagePolls();
+            } catch (e) {
+                Toast.error(e.message);
+            }
+        }
+
+        async function extendPoll(id) {
+            const days = prompt('На сколько дней продлить голосование? (0 = без срока)', '7');
+            if (days === null) return;
+            
+            const numDays = parseInt(days);
+            let newDate = null;
+            if (numDays > 0) {
+                const d = new Date();
+                d.setDate(d.getDate() + numDays);
+                newDate = d.toISOString();
+            }
+
+            try {
+                await api(`/admin/polls/${id}/extend`, { 
+                    method: 'POST',
+                    body: { endsAt: newDate }
+                });
+                Toast.success(numDays > 0 ? `Голосование продлено на ${numDays} дней` : 'Срок окончания снят');
                 loadManagePolls();
             } catch (e) {
                 Toast.error(e.message);
