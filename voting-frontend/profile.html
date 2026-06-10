@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" id="mainNav"></nav>
+
+    <div class="container mt-4">
+        <h1>Информация об аккаунте</h1>
+
+        <div class="row justify-content-center mt-4">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow">
+                    <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width:80px;height:80px;font-size:32px;">
+                                <span id="userAvatar"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">ФИО</label>
+                            <div class="form-control bg-light" id="profileFullName">—</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Email</label>
+                            <div class="form-control bg-light" id="profileEmail">—</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label text-muted small">Статус</label>
+                            <div id="profileRole">
+                                <span class="badge bg-secondary">Пользователь</span>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-danger w-100" onclick="logout()">Выйти из аккаунта</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light text-center py-4 mt-5 border-top">
+        <div class="container">
+            <p class="text-muted mb-0">Онлайн-сервис голосований</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/toast.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        initAuth().then(ok => {
+            if (!ok) return;
+            loadProfile();
+        });
+
+        async function loadProfile() {
+            try {
+                const user = await api('/auth/me');
+                if (!user) return;
+
+                document.getElementById('profileFullName').textContent = user.fullName || '—';
+                document.getElementById('profileEmail').textContent = user.email || '—';
+
+                const avatar = document.getElementById('userAvatar');
+                avatar.textContent = (user.fullName || '?').charAt(0).toUpperCase();
+
+                const roleContainer = document.getElementById('profileRole');
+                if (user.isAdmin) {
+                    roleContainer.innerHTML = '<span class="badge bg-danger">Администратор</span>';
+                } else {
+                    roleContainer.innerHTML = '<span class="badge bg-secondary">Пользователь</span>';
+                }
+            } catch (e) {
+                Toast.error(e.message);
+            }
+        }
+    </script>
+</body>
+</html>

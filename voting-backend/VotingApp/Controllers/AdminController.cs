@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using VotingApp.DTOs.Auth;
 using VotingApp.DTOs.Poll;
+using VotingApp.Repositories;
 using VotingApp.Services;
 
 namespace VotingApp.Controllers;
@@ -14,12 +16,14 @@ public class AdminController : ControllerBase
     private readonly IPollService _pollService;
     private readonly IAuditService _auditService;
     private readonly IExcelExportService _excelExportService;
+    private readonly IUserRepository _userRepository;
 
-    public AdminController(IPollService pollService, IAuditService auditService, IExcelExportService excelExportService)
+    public AdminController(IPollService pollService, IAuditService auditService, IExcelExportService excelExportService, IUserRepository userRepository)
     {
         _pollService = pollService;
         _auditService = auditService;
         _excelExportService = excelExportService;
+        _userRepository = userRepository;
     }
 
     [HttpPost("polls")]
@@ -153,6 +157,37 @@ public class AdminController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    [HttpPost("users/make-admin")]
+    public async Task<IActionResult> MakeAdmin([FromBody] MakeAdminRequest request)
+    {
+        if (!IsAdmin()) return Forbid();
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return BadRequest(new { message = "Email обязателен" });
+        }
+
+        var user = await _userRepository.GetByEmailAsync(request.Email.Trim());
+        if (user == null)
+        {
+            return BadRequest(new { message = "Пользователь с таким email не найден" });
+        }
+
+        if (user.IsAdmin)
+        {
+            return BadRequest(new { message = "Пользователь уже является администратором" });
+        }
+
+        user.IsAdmin = true;
+        await _userRepository.UpdateAsync(user);
+
+        var currentUserId = GetUserId();
+        var currentEmail = GetUserEmail();
+        await _auditService.LogAsync(currentUserId, currentEmail ?? "", "MAKE_ADMIN", "User", user.Id.ToString(), $"Пользователю {user.Email} назначены права администратора");
+
+        return Ok(new { message = $"Пользователь {user.Email} теперь администратор" });
     }
 
     private bool IsAdmin()
