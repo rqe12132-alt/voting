@@ -54,8 +54,15 @@ async function api(endpoint, options = {}) {
     }
 
     if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Ошибка сети' }));
-        throw new Error(error.message || `HTTP ${response.status}`);
+        let errorData;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+        } else {
+            const text = await response.text().catch(() => '');
+            errorData = { message: text || `HTTP ${response.status}` };
+        }
+        throw new Error(errorData.message || `HTTP ${response.status}`);
     }
 
     const contentType = response.headers.get('content-type');

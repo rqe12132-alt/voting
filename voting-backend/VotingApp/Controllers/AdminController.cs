@@ -162,7 +162,7 @@ public class AdminController : ControllerBase
     [HttpPost("users/make-admin")]
     public async Task<IActionResult> MakeAdmin([FromBody] MakeAdminRequest request)
     {
-        if (!IsAdmin()) return Forbid();
+        if (!IsAdmin()) return StatusCode(403, new { message = "Нет прав администратора" });
 
         if (string.IsNullOrWhiteSpace(request.Email))
         {
