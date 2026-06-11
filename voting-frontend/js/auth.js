@@ -53,7 +53,6 @@ function updateNav() {
                 <ul class="navbar-nav ms-auto">
                     ${user ? `
                         <li class="nav-item"><a class="nav-link" href="/profile.html">${user.fullName}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#" onclick="logout(); return false;">Выйти</a></li>
                     ` : `
                         <li class="nav-item"><a class="nav-link" href="/login.html">Вход</a></li>
                     `}
