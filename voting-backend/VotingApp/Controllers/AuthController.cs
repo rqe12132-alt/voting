@@ -21,12 +21,15 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var result = await _authService.RegisterAsync(request);
-        if (result == null)
+        try
         {
-            return BadRequest(new { message = "Пользователь с таким email уже существует" });
+            var result = await _authService.RegisterAsync(request);
+            return Ok(result);
         }
-        return Ok(result);
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("login")]

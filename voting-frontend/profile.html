@@ -31,6 +31,10 @@
                             <label class="form-label text-muted small">Email</label>
                             <div class="form-control bg-light" id="profileEmail">—</div>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Идентификационный номер</label>
+                            <div class="form-control bg-light" id="profilePersonalNumber">—</div>
+                        </div>
                         <div class="mb-4">
                             <label class="form-label text-muted small">Статус</label>
                             <div id="profileRole">
@@ -68,6 +72,7 @@
 
                 document.getElementById('profileFullName').textContent = user.fullName || '—';
                 document.getElementById('profileEmail').textContent = user.email || '—';
+                document.getElementById('profilePersonalNumber').textContent = user.personalNumber || '—';
 
                 const avatar = document.getElementById('userAvatar');
                 avatar.textContent = (user.fullName || '?').charAt(0).toUpperCase();

@@ -54,6 +54,12 @@
                                 <div id="regPasswordError" class="invalid-feedback d-block"></div>
                             </div>
                             <div class="mb-3">
+                                <label class="form-label">Идентификационный номер паспорта</label>
+                                <input type="text" class="form-control" id="regPersonalNumber" placeholder="3070773A082РВ0" maxlength="14" oninput="clearError('regPersonalNumberError')">
+                                <div id="regPersonalNumberError" class="invalid-feedback d-block"></div>
+                                <div class="form-text">14 символов: пол/век + дата + регион + номер + гражданство + цифра</div>
+                            </div>
+                            <div class="mb-3">
                                 <label class="form-label">Код администратора (опционально)</label>
                                 <input type="text" class="form-control" id="regAdminCode" placeholder="">
                                 <div class="form-text">Оставьте пустым, если вы не администратор</div>
@@ -104,7 +110,7 @@
         }
 
         function clearAllErrors() {
-            ['loginEmailError','regFullNameError','regEmailError','regPasswordError'].forEach(clearError);
+            ['loginEmailError','regFullNameError','regEmailError','regPasswordError','regPersonalNumberError'].forEach(clearError);
         }
 
         function isValidEmail(email) {
@@ -152,6 +158,7 @@
             const fullName = document.getElementById('regFullName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
+            const personalNumber = document.getElementById('regPersonalNumber').value.trim().toUpperCase();
             const adminCode = document.getElementById('regAdminCode').value || null;
 
             let hasError = false;
@@ -170,12 +177,19 @@
                 showFieldError('regPasswordError', 'Пароль должен быть не менее 6 символов');
                 hasError = true;
             }
+            if (!personalNumber) {
+                showFieldError('regPersonalNumberError', 'Введите идентификационный номер паспорта');
+                hasError = true;
+            } else if (personalNumber.length !== 14) {
+                showFieldError('regPersonalNumberError', 'Номер должен содержать ровно 14 символов');
+                hasError = true;
+            }
             if (hasError) return;
 
             try {
                 const result = await api('/auth/register', {
                     method: 'POST',
-                    body: { fullName, email, password, adminCode }
+                    body: { fullName, email, password, personalNumber, adminCode }
                 });
                 setAuth(result);
                 showMessage('Регистрация успешна! Проверьте письмо с кодом подтверждения.', 'success');

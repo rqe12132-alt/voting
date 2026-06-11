@@ -8,6 +8,7 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<PersonalId> PersonalIds => Set<PersonalId>();
     public DbSet<Poll> Polls => Set<Poll>();
     public DbSet<PollOption> PollOptions => Set<PollOption>();
     public DbSet<Vote> Votes => Set<Vote>();
@@ -26,6 +27,14 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(255);
             entity.Property(e => e.FullName).HasMaxLength(255);
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
+        });
+
+        // PersonalId
+        modelBuilder.Entity<PersonalId>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Number).IsUnique();
+            entity.Property(e => e.Number).HasMaxLength(20);
         });
 
         // Poll

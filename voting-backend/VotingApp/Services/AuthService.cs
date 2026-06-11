@@ -7,14 +7,16 @@ namespace VotingApp.Services;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IPersonalIdRepository _personalIdRepository;
     private readonly IJwtService _jwtService;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IUserRepository userRepository, IJwtService jwtService, IEmailService emailService, IConfiguration configuration, ILogger<AuthService> logger)
+    public AuthService(IUserRepository userRepository, IPersonalIdRepository personalIdRepository, IJwtService jwtService, IEmailService emailService, IConfiguration configuration, ILogger<AuthService> logger)
     {
         _userRepository = userRepository;
+        _personalIdRepository = personalIdRepository;
         _jwtService = jwtService;
         _emailService = emailService;
         _configuration = configuration;
@@ -30,7 +32,24 @@ public class AuthService : IAuthService
     {
         if (await _userRepository.ExistsAsync(request.Email))
         {
-            return null;
+            throw new ArgumentException("Пользователь с таким email уже существует");
+        }
+
+        // Validate and consume personal number
+        var personalNumber = request.PersonalNumber?.Trim().ToUpper() ?? "";
+        if (string.IsNullOrEmpty(personalNumber))
+        {
+            throw new ArgumentException("Идентификационный номер паспорта обязателен");
+        }
+
+        var personalId = await _personalIdRepository.GetByNumberAsync(personalNumber);
+        if (personalId == null)
+        {
+            throw new ArgumentException("Идентификационный номер не найден в базе данных");
+        }
+        if (personalId.IsUsed)
+        {
+            throw new ArgumentException("Идентификационный номер уже использован");
         }
 
         var isFirstUser = !await _userRepository.AnyAsync();
@@ -50,6 +69,11 @@ public class AuthService : IAuthService
         };
 
         await _userRepository.CreateAsync(user);
+
+        // Mark personal number as used and link to user
+        personalId.IsUsed = true;
+        personalId.User = user;
+        await _personalIdRepository.UpdateAsync(personalId);
 
         await _emailService.SendVerificationEmailAsync(user, verificationCode);
 
@@ -83,11 +107,14 @@ public class AuthService : IAuthService
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null) return null;
 
+        var personalId = await _personalIdRepository.GetByUserIdAsync(userId);
+
         return new UserDto
         {
             Id = user.Id,
             Email = user.Email,
             FullName = user.FullName,
+            PersonalNumber = personalId?.Number ?? "",
             IsAdmin = user.IsAdmin,
             EmailVerified = user.EmailVerified
         };

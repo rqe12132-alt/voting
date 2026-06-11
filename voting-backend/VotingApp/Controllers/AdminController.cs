@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using VotingApp.Data;
 using VotingApp.DTOs.Auth;
 using VotingApp.DTOs.Poll;
+using VotingApp.Models;
 using VotingApp.Repositories;
 using VotingApp.Services;
 
@@ -17,13 +20,17 @@ public class AdminController : ControllerBase
     private readonly IAuditService _auditService;
     private readonly IExcelExportService _excelExportService;
     private readonly IUserRepository _userRepository;
+    private readonly IPersonalIdRepository _personalIdRepository;
+    private readonly AppDbContext _context;
 
-    public AdminController(IPollService pollService, IAuditService auditService, IExcelExportService excelExportService, IUserRepository userRepository)
+    public AdminController(IPollService pollService, IAuditService auditService, IExcelExportService excelExportService, IUserRepository userRepository, IPersonalIdRepository personalIdRepository, AppDbContext context)
     {
         _pollService = pollService;
         _auditService = auditService;
         _excelExportService = excelExportService;
         _userRepository = userRepository;
+        _personalIdRepository = personalIdRepository;
+        _context = context;
     }
 
     [HttpPost("polls")]
@@ -188,6 +195,88 @@ public class AdminController : ControllerBase
         await _auditService.LogAsync(currentUserId, currentEmail ?? "", "MAKE_ADMIN", "User", user.Id.ToString(), $"Пользователю {user.Email} назначены права администратора");
 
         return Ok(new { message = $"Пользователь {user.Email} теперь администратор" });
+    }
+
+    [HttpPost("seed-personal-ids")]
+    public async Task<IActionResult> SeedPersonalIds()
+    {
+        if (!IsAdmin()) return StatusCode(403, new { message = "Нет прав администратора" });
+
+        var existingCount = await _personalIdRepository.CountAsync();
+        int generatedCount = 0;
+        if (existingCount == 0)
+        {
+            var ids = GeneratePersonalIds(1000);
+            await _personalIdRepository.CreateRangeAsync(ids);
+            generatedCount = ids.Count;
+        }
+
+        // Assign numbers to existing users without one
+        var usersWithoutId = await _context.Users
+            .Where(u => !_context.PersonalIds.Any(p => p.User != null && p.User.Id == u.Id))
+            .ToListAsync();
+
+        var unusedIds = await _personalIdRepository.GetUnusedAsync(usersWithoutId.Count);
+        int assignedCount = 0;
+        for (int i = 0; i < usersWithoutId.Count && i < unusedIds.Count; i++)
+        {
+            unusedIds[i].IsUsed = true;
+            unusedIds[i].User = usersWithoutId[i];
+            await _personalIdRepository.UpdateAsync(unusedIds[i]);
+            assignedCount++;
+        }
+
+        if (generatedCount > 0)
+        {
+            return Ok(new { message = $"Сгенерировано {generatedCount} номеров. Назначено {assignedCount} существующим пользователям." });
+        }
+        else
+        {
+            return Ok(new { message = $"Назначено {assignedCount} существующим пользователям (свободных номеров: {unusedIds.Count})." });
+        }
+    }
+
+    private static List<PersonalId> GeneratePersonalIds(int count)
+    {
+        var random = new Random();
+        var regions = new[] { 'A', 'B', 'C', 'H', 'K', 'E', 'M' };
+        var citizenships = new[] { "РВ", "BA", "BI" };
+        var result = new List<PersonalId>(count);
+        var used = new HashSet<string>();
+
+        for (int i = 0; i < count; i++)
+        {
+            // Generate birth date 1920-2024
+            var year = random.Next(1920, 2025);
+            var month = random.Next(1, 13);
+            var day = random.Next(1, DateTime.DaysInMonth(year, month) + 1);
+
+            // Determine gender+century code
+            int genderCode;
+            if (year < 1900) genderCode = random.Next(0, 2) == 0 ? 1 : 2; // XIX (rare in our range, but possible)
+            else if (year < 2000) genderCode = random.Next(0, 2) == 0 ? 3 : 4;
+            else genderCode = random.Next(0, 2) == 0 ? 5 : 6;
+
+            var dd = day.ToString("D2");
+            var mm = month.ToString("D2");
+            var yy = (year % 100).ToString("D2");
+            var region = regions[random.Next(regions.Length)];
+            var serial = (i + 1).ToString("D3"); // 001-999, but we need uniqueness for same day
+            var citizenship = citizenships[random.Next(citizenships.Length)];
+            var filler = random.Next(0, 10).ToString();
+
+            var number = $"{genderCode}{dd}{mm}{yy}{region}{serial}{citizenship}{filler}";
+
+            if (!used.Add(number))
+            {
+                i--; // retry
+                continue;
+            }
+
+            result.Add(new PersonalId { Number = number });
+        }
+
+        return result;
     }
 
     private bool IsAdmin()
