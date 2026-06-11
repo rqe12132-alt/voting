@@ -26,6 +26,9 @@
             <li class="nav-item">
                 <a class="nav-link" href="#" onclick="showAdminTab('admins')">Администраторы</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="showAdminTab('debug')">Debug</a>
+            </li>
         </ul>
 
         <div id="createTab">
@@ -174,7 +177,7 @@
         </div>
 
         <div id="adminsTab" style="display:none">
-            <div class="card mb-4">
+            <div class="card">
                 <div class="card-body">
                     <h5 class="card-title mb-3">Назначить администратора</h5>
                     <form id="makeAdminForm" onsubmit="event.preventDefault(); makeAdmin();">
@@ -187,13 +190,69 @@
                     <div id="makeAdminMsg" class="mt-3"></div>
                 </div>
             </div>
+        </div>
 
-            <div class="card">
+        <div id="debugTab" style="display:none">
+            <div class="card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">База идентификационных номеров</h5>
+                    <h5 class="card-title mb-3">Генерация идентификационных номеров</h5>
                     <p class="text-muted">Сгенерировать 1000 тестовых номеров паспортов для регистрации пользователей.</p>
                     <button class="btn btn-outline-success" onclick="seedPersonalIds()">Сгенерировать 1000 номеров</button>
                     <div id="seedPersonalIdsMsg" class="mt-3"></div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Создание тестовых пользователей</h5>
+                    <p class="text-muted">Создать тестовых пользователей с паролем <code>test123</code> и сразу подтвержденным email.</p>
+                    <form id="createTestUsersForm" onsubmit="event.preventDefault(); createTestUsers();">
+                        <div class="mb-3">
+                            <label class="form-label">Количество (макс. 100)</label>
+                            <input type="number" class="form-control" id="testUsersCount" value="10" min="1" max="100">
+                        </div>
+                        <button type="submit" class="btn btn-outline-info">Создать тестовых пользователей</button>
+                    </form>
+                    <div id="createTestUsersMsg" class="mt-3"></div>
+                    <div id="createTestUsersList" class="mt-2"></div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Тестовая отправка письма</h5>
+                    <p class="text-muted">Отправить тестовое письмо с кодом подтверждения на указанный email.</p>
+                    <form id="sendTestEmailForm" onsubmit="event.preventDefault(); sendTestEmail();">
+                        <div class="mb-3">
+                            <label class="form-label">Email получателя</label>
+                            <input type="email" class="form-control" id="testEmailRecipient" placeholder="user@example.com" required>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary">Отправить тестовое письмо</button>
+                    </form>
+                    <div id="sendTestEmailMsg" class="mt-3"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Накрутка голосов</h5>
+                    <p class="text-muted">Создать фейковые голоса от существующих пользователей на активное голосование.</p>
+                    <form id="voteRigForm" onsubmit="event.preventDefault(); voteRig();">
+                        <div class="mb-3">
+                            <label class="form-label">ID голосования</label>
+                            <input type="text" class="form-control" id="rigPollId" placeholder="00000000-0000-0000-0000-000000000000" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Количество голосов</label>
+                            <input type="number" class="form-control" id="rigCount" value="10" min="1" max="1000">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">ID варианта (опционально, оставьте пустым для случайного)</label>
+                            <input type="text" class="form-control" id="rigOptionId" placeholder="">
+                        </div>
+                        <button type="submit" class="btn btn-warning">Накрутить голоса</button>
+                    </form>
+                    <div id="voteRigMsg" class="mt-3"></div>
                 </div>
             </div>
         </div>
@@ -268,6 +327,7 @@
             document.getElementById('createTab').style.display = tab === 'create' ? 'block' : 'none';
             document.getElementById('manageTab').style.display = tab === 'manage' ? 'block' : 'none';
             document.getElementById('adminsTab').style.display = tab === 'admins' ? 'block' : 'none';
+            document.getElementById('debugTab').style.display = tab === 'debug' ? 'block' : 'none';
             document.querySelectorAll('#adminTabs .nav-link').forEach(el => {
                 if (el.getAttribute('href') === '#') el.classList.remove('active');
             });
@@ -308,6 +368,90 @@
                     method: 'POST'
                 });
                 Toast.success(result.message || 'Номера сгенерированы');
+                msgEl.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+            } catch (e) {
+                Toast.error(e.message);
+                msgEl.innerHTML = `<div class="alert alert-danger">${e.message}</div>`;
+            }
+        }
+
+        async function createTestUsers() {
+            const count = parseInt(document.getElementById('testUsersCount').value);
+            const msgEl = document.getElementById('createTestUsersMsg');
+            const listEl = document.getElementById('createTestUsersList');
+            msgEl.innerHTML = '';
+            listEl.innerHTML = '';
+
+            if (!count || count < 1 || count > 100) {
+                msgEl.innerHTML = '<div class="alert alert-danger">Количество должно быть от 1 до 100</div>';
+                return;
+            }
+
+            try {
+                const result = await api('/admin/debug/create-test-users', {
+                    method: 'POST',
+                    body: { count }
+                });
+                Toast.success(result.message || 'Пользователи созданы');
+                msgEl.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+                if (result.users && result.users.length > 0) {
+                    listEl.innerHTML = '<strong>Созданные пользователи:</strong><br>' +
+                        result.users.map(u => `<code>${u}</code>`).join('<br>');
+                }
+            } catch (e) {
+                Toast.error(e.message);
+                msgEl.innerHTML = `<div class="alert alert-danger">${e.message}</div>`;
+            }
+        }
+
+        async function sendTestEmail() {
+            const email = document.getElementById('testEmailRecipient').value.trim();
+            const msgEl = document.getElementById('sendTestEmailMsg');
+            msgEl.innerHTML = '';
+
+            if (!email) {
+                msgEl.innerHTML = '<div class="alert alert-danger">Введите email</div>';
+                return;
+            }
+
+            try {
+                const result = await api('/admin/debug/send-test-email', {
+                    method: 'POST',
+                    body: { email }
+                });
+                Toast.success(result.message || 'Письмо отправлено');
+                msgEl.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+            } catch (e) {
+                Toast.error(e.message);
+                msgEl.innerHTML = `<div class="alert alert-danger">${e.message}</div>`;
+            }
+        }
+
+        async function voteRig() {
+            const pollId = document.getElementById('rigPollId').value.trim();
+            const count = parseInt(document.getElementById('rigCount').value);
+            const optionId = document.getElementById('rigOptionId').value.trim();
+            const msgEl = document.getElementById('voteRigMsg');
+            msgEl.innerHTML = '';
+
+            if (!pollId) {
+                msgEl.innerHTML = '<div class="alert alert-danger">Введите ID голосования</div>';
+                return;
+            }
+            if (!count || count < 1) {
+                msgEl.innerHTML = '<div class="alert alert-danger">Введите количество голосов</div>';
+                return;
+            }
+
+            const body = { pollId, count };
+            if (optionId) body.optionId = optionId;
+
+            try {
+                const result = await api('/admin/debug/vote-rig', {
+                    method: 'POST',
+                    body
+                });
+                Toast.success(result.message || 'Голоса накручены');
                 msgEl.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
             } catch (e) {
                 Toast.error(e.message);

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using VotingApp.Data;
+using VotingApp.DTOs.Admin;
 using VotingApp.DTOs.Auth;
 using VotingApp.DTOs.Poll;
 using VotingApp.Models;
@@ -21,15 +22,21 @@ public class AdminController : ControllerBase
     private readonly IExcelExportService _excelExportService;
     private readonly IUserRepository _userRepository;
     private readonly IPersonalIdRepository _personalIdRepository;
+    private readonly IPollRepository _pollRepository;
+    private readonly IVoteRepository _voteRepository;
+    private readonly IEmailService _emailService;
     private readonly AppDbContext _context;
 
-    public AdminController(IPollService pollService, IAuditService auditService, IExcelExportService excelExportService, IUserRepository userRepository, IPersonalIdRepository personalIdRepository, AppDbContext context)
+    public AdminController(IPollService pollService, IAuditService auditService, IExcelExportService excelExportService, IUserRepository userRepository, IPersonalIdRepository personalIdRepository, IPollRepository pollRepository, IVoteRepository voteRepository, IEmailService emailService, AppDbContext context)
     {
         _pollService = pollService;
         _auditService = auditService;
         _excelExportService = excelExportService;
         _userRepository = userRepository;
         _personalIdRepository = personalIdRepository;
+        _pollRepository = pollRepository;
+        _voteRepository = voteRepository;
+        _emailService = emailService;
         _context = context;
     }
 
@@ -202,38 +209,158 @@ public class AdminController : ControllerBase
     {
         if (!IsAdmin()) return StatusCode(403, new { message = "Нет прав администратора" });
 
-        var existingCount = await _personalIdRepository.CountAsync();
-        int generatedCount = 0;
-        if (existingCount == 0)
-        {
-            var ids = GeneratePersonalIds(1000);
-            await _personalIdRepository.CreateRangeAsync(ids);
-            generatedCount = ids.Count;
-        }
+        var ids = GeneratePersonalIds(1000);
+        await _personalIdRepository.CreateRangeAsync(ids);
 
-        // Assign numbers to existing users without one
-        var usersWithoutId = await _context.Users
-            .Where(u => !_context.PersonalIds.Any(p => p.User != null && p.User.Id == u.Id))
+        return Ok(new { message = $"Сгенерировано {ids.Count} идентификационных номеров" });
+    }
+
+    [HttpPost("debug/vote-rig")]
+    public async Task<IActionResult> VoteRig([FromBody] VoteRigRequest request)
+    {
+        if (!IsAdmin()) return StatusCode(403, new { message = "Нет прав администратора" });
+
+        var poll = await _pollRepository.GetByIdWithOptionsAsync(request.PollId);
+        if (poll == null)
+            return BadRequest(new { message = "Голосование не найдено" });
+        if (poll.Status != PollStatus.Active)
+            return BadRequest(new { message = "Голосование не активно" });
+
+        var allUsers = await _context.Users.ToListAsync();
+        var votedUserIds = await _context.Votes
+            .Where(v => v.PollId == request.PollId)
+            .Select(v => v.UserId)
+            .Distinct()
             .ToListAsync();
 
-        var unusedIds = await _personalIdRepository.GetUnusedAsync(usersWithoutId.Count);
-        int assignedCount = 0;
-        for (int i = 0; i < usersWithoutId.Count && i < unusedIds.Count; i++)
+        var availableUsers = allUsers.Where(u => !votedUserIds.Contains(u.Id)).ToList();
+        if (availableUsers.Count == 0)
+            return BadRequest(new { message = "Нет пользователей, которые еще не голосовали" });
+
+        var count = Math.Min(request.Count, availableUsers.Count);
+        var selectedUsers = availableUsers.OrderBy(_ => Guid.NewGuid()).Take(count).ToList();
+        var validOptionIds = poll.Options.Select(o => o.Id).ToList();
+        if (validOptionIds.Count == 0)
+            return BadRequest(new { message = "У голосования нет вариантов" });
+
+        var random = new Random();
+        int createdVotes = 0;
+
+        foreach (var user in selectedUsers)
         {
-            unusedIds[i].IsUsed = true;
-            unusedIds[i].User = usersWithoutId[i];
-            await _personalIdRepository.UpdateAsync(unusedIds[i]);
-            assignedCount++;
+            var optionIds = new List<Guid>();
+            if (request.OptionId.HasValue && validOptionIds.Contains(request.OptionId.Value))
+            {
+                optionIds.Add(request.OptionId.Value);
+            }
+            else
+            {
+                if (poll.Type == PollType.SingleChoice || poll.Type == PollType.YesNo)
+                {
+                    optionIds.Add(validOptionIds[random.Next(validOptionIds.Count)]);
+                }
+                else // MultipleChoice
+                {
+                    var numChoices = random.Next(1, Math.Min(3, validOptionIds.Count) + 1);
+                    optionIds = validOptionIds.OrderBy(_ => Guid.NewGuid()).Take(numChoices).ToList();
+                }
+            }
+
+            foreach (var optionId in optionIds)
+            {
+                var vote = new Vote
+                {
+                    UserId = user.Id,
+                    PollId = request.PollId,
+                    OptionId = optionId
+                };
+                await _voteRepository.CreateAsync(vote);
+                createdVotes++;
+            }
         }
 
-        if (generatedCount > 0)
+        var userId = GetUserId();
+        var email = GetUserEmail();
+        await _auditService.LogAsync(userId, email ?? "", "VOTE_RIG", "Poll", request.PollId.ToString(), $"Накручено {selectedUsers.Count} голосов ({createdVotes} записей)");
+
+        return Ok(new { message = $"Накручено {selectedUsers.Count} голосов ({createdVotes} записей)" });
+    }
+
+    [HttpPost("debug/create-test-users")]
+    public async Task<IActionResult> CreateTestUsers([FromBody] CreateTestUsersRequest request)
+    {
+        if (!IsAdmin()) return StatusCode(403, new { message = "Нет прав администратора" });
+
+        var count = Math.Min(request.Count, 100);
+        var createdUsers = new List<string>();
+        var unusedIds = await _personalIdRepository.GetUnusedAsync(count);
+
+        if (unusedIds.Count == 0)
         {
-            return Ok(new { message = $"Сгенерировано {generatedCount} номеров. Назначено {assignedCount} существующим пользователям." });
+            return BadRequest(new { message = "Нет свободных идентификационных номеров. Сначала сгенерируйте номера." });
         }
-        else
+
+        var random = new Random();
+        for (int i = 0; i < count && i < unusedIds.Count; i++)
         {
-            return Ok(new { message = $"Назначено {assignedCount} существующим пользователям (свободных номеров: {unusedIds.Count})." });
+            var email = $"testuser{i + 1}@test.com";
+            if (await _userRepository.ExistsAsync(email))
+            {
+                continue;
+            }
+
+            var user = new User
+            {
+                Email = email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("test123"),
+                FullName = $"Тестовый Пользователь {i + 1}",
+                IsAdmin = false,
+                EmailVerified = true,
+                EmailVerificationToken = null,
+                EmailVerificationTokenExpiresAt = null
+            };
+
+            await _userRepository.CreateAsync(user);
+
+            unusedIds[i].IsUsed = true;
+            unusedIds[i].User = user;
+            await _personalIdRepository.UpdateAsync(unusedIds[i]);
+
+            createdUsers.Add(email);
         }
+
+        var currentUserId = GetUserId();
+        var currentEmail = GetUserEmail();
+        await _auditService.LogAsync(currentUserId, currentEmail ?? "", "CREATE_TEST_USERS", "User", "", $"Создано {createdUsers.Count} тестовых пользователей");
+
+        return Ok(new
+        {
+            message = $"Создано {createdUsers.Count} тестовых пользователей",
+            password = "test123",
+            users = createdUsers
+        });
+    }
+
+    [HttpPost("debug/send-test-email")]
+    public async Task<IActionResult> SendTestEmail([FromBody] SendTestEmailRequest request)
+    {
+        if (!IsAdmin()) return StatusCode(403, new { message = "Нет прав администратора" });
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return BadRequest(new { message = "Email обязателен" });
+        }
+
+        var fakeUser = new User
+        {
+            Email = request.Email,
+            FullName = "Тестовый Получатель",
+            EmailVerificationToken = "123456"
+        };
+
+        await _emailService.SendVerificationEmailAsync(fakeUser, "123456");
+
+        return Ok(new { message = $"Тестовое письмо отправлено на {request.Email}" });
     }
 
     private static List<PersonalId> GeneratePersonalIds(int count)
