@@ -11,7 +11,27 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="mainNav"></nav>
 
     <div class="container mt-4">
-        <h1>Журнал аудита</h1>
+        <h1>Админ-панель</h1>
+
+        <ul class="nav nav-pills mb-4 mt-3" id="adminTabs">
+            <li class="nav-item">
+                <a class="nav-link" href="/admin.html">Создать голосование</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin.html">Управление</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="#">Журнал аудита</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin.html">Администраторы</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/admin.html">Debug</a>
+            </li>
+        </ul>
+
+        <h2>Журнал аудита</h2>
         <p class="text-muted">История действий в системе</p>
 
         <div class="table-responsive mt-3">
@@ -94,9 +114,9 @@
         function actionColor(action) {
             switch(action) {
                 case 'CREATE': return 'success';
-                case 'PUBLISH': return 'primary';
+                case 'PUBLISH': return 'dark';
                 case 'DELETE': return 'danger';
-                case 'VOTE': return 'info';
+                case 'VOTE': return 'secondary';
                 case 'LOGIN': return 'secondary';
                 default: return 'light';
             }

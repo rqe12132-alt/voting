@@ -11,4 +11,6 @@ public interface IUserRepository
     Task<User?> GetByVerificationTokenAsync(string token);
     Task<User> CreateAsync(User user);
     Task UpdateAsync(User user);
+    Task<List<User>> GetAllAsync(int skip, int take);
+    Task<int> CountAsync();
 }

@@ -12,7 +12,7 @@ footer {
 
 /* Hero секция главной */
 .hero-section {
-    background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+    background: linear-gradient(135deg, #212529 0%, #495057 100%);
 }
 
 /* Карточки голосований */
@@ -92,21 +92,35 @@ footer {
 }
 
 .option-selectable-vote:hover {
-    border-color: #0d6efd;
-    box-shadow: 0 2px 12px rgba(13, 110, 253, 0.12);
+    border-color: #212529;
+    box-shadow: 0 2px 12px rgba(33, 37, 41, 0.12);
 }
 
 .option-selectable-vote.selected {
-    border-color: #0d6efd;
-    background-color: rgba(13, 110, 253, 0.04);
-    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+    border-color: #212529;
+    background-color: rgba(33, 37, 41, 0.04);
+    box-shadow: 0 0 0 3px rgba(33, 37, 41, 0.15);
+}
+
+.option-image-vote {
+    width: 120px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+}
+
+@media (max-width: 576px) {
+    .option-image-vote {
+        width: 80px;
+    }
 }
 
 .option-input {
     width: 22px;
     height: 22px;
     cursor: pointer;
-    accent-color: #0d6efd;
+    accent-color: #212529;
 }
 
 .option-image-vote {
@@ -130,21 +144,22 @@ footer {
 }
 
 .option-selectable-vote:hover {
-    border-color: #0d6efd;
-    box-shadow: 0 2px 12px rgba(13, 110, 253, 0.12);
+    border-color: #212529;
+    box-shadow: 0 2px 12px rgba(33, 37, 41, 0.12);
 }
 
 .option-selectable-vote.selected {
-    border-color: #0d6efd;
-    background-color: rgba(13, 110, 253, 0.04);
-    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+    border-color: #212529;
+    background-color: rgba(33, 37, 41, 0.04);
+    box-shadow: 0 0 0 3px rgba(33, 37, 41, 0.15);
 }
 
 .option-image-vote {
     width: 120px;
-    height: 100%;
-    min-height: 80px;
+    height: auto;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
+    display: block;
 }
 
 @media (max-width: 576px) {
@@ -156,6 +171,12 @@ footer {
 /* Результаты голосования */
 .result-item {
     padding: 0.75rem 0;
+}
+
+.result-item.border-start {
+    background-color: rgba(33, 37, 41, 0.03);
+    border-radius: 0 0.5rem 0.5rem 0;
+    padding: 0.75rem 0.75rem 0.75rem 1rem;
 }
 
 .progress {
@@ -186,8 +207,8 @@ footer {
 }
 
 .form-check-input:checked {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+    background-color: #212529;
+    border-color: #212529;
 }
 
 .badge {
@@ -209,4 +230,21 @@ footer {
 /* Валидация форм */
 .invalid-feedback {
     font-size: 0.875rem;
+}
+
+/* Темная гамма для nav-pills */
+.nav-pills .nav-link {
+    color: #212529;
+}
+.nav-pills .nav-link:hover {
+    color: #000;
+    background-color: #e9ecef;
+}
+.nav-pills .nav-link.active {
+    background-color: #212529;
+    color: #fff;
+}
+.nav-pills .nav-link.active:hover {
+    background-color: #000;
+    color: #fff;
 }

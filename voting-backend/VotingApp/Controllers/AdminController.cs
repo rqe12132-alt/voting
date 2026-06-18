@@ -75,6 +75,75 @@ public class AdminController : ControllerBase
         return Ok(polls);
     }
 
+    [HttpGet("polls/{id:guid}/votes")]
+    public async Task<IActionResult> GetPollVotes(Guid id)
+    {
+        if (!IsAdmin()) return Forbid();
+
+        var poll = await _pollRepository.GetByIdAsync(id);
+        if (poll == null) return NotFound(new { message = "Голосование не найдено" });
+
+        var votes = await _voteRepository.GetByPollWithDetailsAsync(id);
+        return Ok(votes.Select(v => new
+        {
+            v.Id,
+            v.UserId,
+            UserEmail = v.User?.Email,
+            UserName = v.User?.FullName,
+            v.OptionId,
+            OptionText = v.Option?.Text,
+            v.CreatedAt
+        }));
+    }
+
+    [HttpGet("users")]
+    public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+    {
+        if (!IsAdmin()) return Forbid();
+
+        var skip = (page - 1) * pageSize;
+        var users = await _userRepository.GetAllAsync(skip, pageSize);
+        var total = await _userRepository.CountAsync();
+
+        return Ok(new
+        {
+            items = users.Select(u => new
+            {
+                u.Id,
+                u.Email,
+                u.FullName,
+                u.IsAdmin,
+                u.EmailVerified,
+                u.CreatedAt
+            }),
+            total,
+            page,
+            pageSize
+        });
+    }
+
+    [HttpGet("users/{id:guid}")]
+    public async Task<IActionResult> GetUserById(Guid id)
+    {
+        if (!IsAdmin()) return Forbid();
+
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null) return NotFound(new { message = "Пользователь не найден" });
+
+        var personalId = await _personalIdRepository.GetByUserIdAsync(id);
+
+        return Ok(new
+        {
+            user.Id,
+            user.Email,
+            user.FullName,
+            user.IsAdmin,
+            user.EmailVerified,
+            user.CreatedAt,
+            PersonalNumber = personalId?.Number
+        });
+    }
+
     [HttpPut("polls/{id:guid}")]
     public async Task<IActionResult> UpdatePoll(Guid id, [FromBody] UpdatePollRequest request)
     {
@@ -213,6 +282,24 @@ public class AdminController : ControllerBase
         await _personalIdRepository.CreateRangeAsync(ids);
 
         return Ok(new { message = $"Сгенерировано {ids.Count} идентификационных номеров" });
+    }
+
+    [HttpGet("personal-ids")]
+    public async Task<IActionResult> GetPersonalIds([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+    {
+        if (!IsAdmin()) return StatusCode(403, new { message = "Нет прав администратора" });
+
+        var skip = (page - 1) * pageSize;
+        var items = await _personalIdRepository.GetAllAsync(skip, pageSize);
+        var total = await _personalIdRepository.CountAsync();
+
+        return Ok(new
+        {
+            items = items.Select(p => new { p.Id, p.Number, p.IsUsed }),
+            total,
+            page,
+            pageSize
+        });
     }
 
     [HttpPost("debug/vote-rig")]

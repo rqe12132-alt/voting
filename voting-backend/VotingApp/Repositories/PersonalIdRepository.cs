@@ -63,4 +63,13 @@ public class PersonalIdRepository : IPersonalIdRepository
             .Take(count)
             .ToListAsync();
     }
+
+    public async Task<List<PersonalId>> GetAllAsync(int skip, int take)
+    {
+        return await _context.PersonalIds
+            .OrderBy(p => p.Number)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
+    }
 }

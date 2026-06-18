@@ -1,6 +1,10 @@
 {
   "Files": [
     {
+      "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/28002a9e-d88d-469b-b278-6c66fae2bb7c.png",
+      "PackagePath": "staticwebassets/uploads/28002a9e-d88d-469b-b278-6c66fae2bb7c.png"
+    },
+    {
       "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/6042e5ea-b6e4-4c0b-8acf-b0e318876c38.jpg",
       "PackagePath": "staticwebassets/uploads/6042e5ea-b6e4-4c0b-8acf-b0e318876c38.jpg"
     },
@@ -11,6 +15,18 @@
     {
       "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/8e302b5c-e899-482c-b266-ea3f6f6bea90.jpg",
       "PackagePath": "staticwebassets/uploads/8e302b5c-e899-482c-b266-ea3f6f6bea90.jpg"
+    },
+    {
+      "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/90a4b12f-0fc0-4669-b848-2e863f57adaf.png",
+      "PackagePath": "staticwebassets/uploads/90a4b12f-0fc0-4669-b848-2e863f57adaf.png"
+    },
+    {
+      "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/ad97a4c2-05d9-44bb-9a12-afb9db88cceb.png",
+      "PackagePath": "staticwebassets/uploads/ad97a4c2-05d9-44bb-9a12-afb9db88cceb.png"
+    },
+    {
+      "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/c6b75027-fe0e-4b72-bf74-4c414e52c780.png",
+      "PackagePath": "staticwebassets/uploads/c6b75027-fe0e-4b72-bf74-4c414e52c780.png"
     },
     {
       "Id": "/home/whqeel/code/diplom/voting-backend/VotingApp/wwwroot/uploads/cf281375-4b86-407e-9efa-040fb85160b8.jpg",

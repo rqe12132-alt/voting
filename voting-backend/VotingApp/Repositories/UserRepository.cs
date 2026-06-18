@@ -50,4 +50,18 @@ public class UserRepository : IUserRepository
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<List<User>> GetAllAsync(int skip, int take)
+    {
+        return await _context.Users
+            .OrderByDescending(u => u.CreatedAt)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
+    }
+
+    public async Task<int> CountAsync()
+    {
+        return await _context.Users.CountAsync();
+    }
 }

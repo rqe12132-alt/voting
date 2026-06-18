@@ -10,4 +10,5 @@ public interface IVoteRepository
     Task<int> CountByPollAsync(Guid pollId);
     Task<int> CountByOptionAsync(Guid optionId);
     Task<Dictionary<Guid, int>> GetResultsAsync(Guid pollId);
+    Task<List<Vote>> GetByPollWithDetailsAsync(Guid pollId);
 }

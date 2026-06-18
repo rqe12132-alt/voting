@@ -13,4 +13,5 @@ public interface IPersonalIdRepository
     Task<int> CountAsync();
     Task CreateRangeAsync(IEnumerable<PersonalId> personalIds);
     Task<List<PersonalId>> GetUnusedAsync(int count);
+    Task<List<PersonalId>> GetAllAsync(int skip, int take);
 }

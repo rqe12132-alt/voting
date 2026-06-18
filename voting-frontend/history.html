@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" id="mainNav"></nav>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="mainNav"></nav>
 
     <div class="container mt-4">
         <h1>История голосований</h1>
@@ -16,7 +16,7 @@
 
         <div id="historyList" class="row g-4 mt-2">
             <div class="col-12 text-center py-5">
-                <div class="spinner-border text-primary" role="status"></div>
+                <div class="spinner-border text-dark" role="status"></div>
                 <p class="text-muted mt-2">Загрузка...</p>
             </div>
         </div>
@@ -41,7 +41,7 @@
                 const container = document.getElementById('historyList');
 
                 if (polls.length === 0) {
-                    container.innerHTML = '<div class="col-12"><div class="alert alert-info">Вы еще не участвовали ни в одном голосовании</div></div>';
+                    container.innerHTML = '<div class="col-12"><div class="alert alert-dark">Вы еще не участвовали ни в одном голосовании</div></div>';
                     return;
                 }
 
@@ -58,7 +58,7 @@
                                 <h5 class="card-title">${poll.title}</h5>
                                 <p class="card-text text-muted small">${poll.type === 'SingleChoice' ? 'Один вариант' : poll.type === 'MultipleChoice' ? 'Несколько' : 'Да / Нет'}</p>
                                 <p class="card-text text-muted small">${poll.endsAt ? 'До ' + formatDate(poll.endsAt) : ''}</p>
-                                <a href="/poll.html?id=${poll.id}" class="btn btn-outline-primary mt-auto">Посмотреть результаты</a>
+                                <a href="/poll.html?id=${poll.id}&v=2" class="btn btn-outline-dark mt-auto">Посмотреть результаты</a>
                             </div>
                         </div>
                     </div>

@@ -34,7 +34,7 @@
                                 <label class="form-label">Пароль</label>
                                 <input type="password" class="form-control" id="loginPassword" placeholder="••••••">
                             </div>
-                            <button class="btn btn-primary w-100" onclick="doLogin()">Войти</button>
+                            <button class="btn btn-dark w-100" onclick="doLogin()">Войти</button>
                         </div>
 
                         <div id="registerForm" style="display:none">
@@ -57,7 +57,6 @@
                                 <label class="form-label">Идентификационный номер паспорта</label>
                                 <input type="text" class="form-control" id="regPersonalNumber" placeholder="3070773A082РВ0" maxlength="14" oninput="clearError('regPersonalNumberError')">
                                 <div id="regPersonalNumberError" class="invalid-feedback d-block"></div>
-                                <div class="form-text">14 символов: пол/век + дата + регион + номер + гражданство + цифра</div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Код администратора (опционально)</label>

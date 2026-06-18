@@ -51,4 +51,14 @@ public class VoteRepository : IVoteRepository
             .Select(g => new { OptionId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.OptionId, x => x.Count);
     }
+
+    public async Task<List<Vote>> GetByPollWithDetailsAsync(Guid pollId)
+    {
+        return await _context.Votes
+            .Where(v => v.PollId == pollId)
+            .Include(v => v.User)
+            .Include(v => v.Option)
+            .OrderByDescending(v => v.CreatedAt)
+            .ToListAsync();
+    }
 }
