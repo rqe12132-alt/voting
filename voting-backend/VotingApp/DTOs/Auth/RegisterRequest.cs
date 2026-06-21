@@ -6,5 +6,4 @@ public class RegisterRequest
     public string Password { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string PersonalNumber { get; set; } = string.Empty;
-    public string? AdminCode { get; set; }
 }

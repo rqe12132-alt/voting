@@ -10,16 +10,14 @@ public class AuthService : IAuthService
     private readonly IPersonalIdRepository _personalIdRepository;
     private readonly IJwtService _jwtService;
     private readonly IEmailService _emailService;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IUserRepository userRepository, IPersonalIdRepository personalIdRepository, IJwtService jwtService, IEmailService emailService, IConfiguration configuration, ILogger<AuthService> logger)
+    public AuthService(IUserRepository userRepository, IPersonalIdRepository personalIdRepository, IJwtService jwtService, IEmailService emailService, ILogger<AuthService> logger)
     {
         _userRepository = userRepository;
         _personalIdRepository = personalIdRepository;
         _jwtService = jwtService;
         _emailService = emailService;
-        _configuration = configuration;
         _logger = logger;
     }
 
@@ -53,8 +51,7 @@ public class AuthService : IAuthService
         }
 
         var isFirstUser = !await _userRepository.AnyAsync();
-        var adminCode = _configuration["AdminSettings:SecretCode"];
-        var isAdmin = isFirstUser || (!string.IsNullOrEmpty(request.AdminCode) && request.AdminCode == adminCode);
+        var isAdmin = isFirstUser;
 
         var verificationCode = GenerateVerificationCode();
         var user = new User
