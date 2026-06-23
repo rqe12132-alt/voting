@@ -158,9 +158,14 @@ public class PollService : IPollService
     {
         var poll = await _pollRepository.GetByIdAsync(pollId);
         if (poll == null) return false;
-        if (poll.Status != PollStatus.Active && poll.Status != PollStatus.Draft) return false;
+        if (poll.Status != PollStatus.Active && poll.Status != PollStatus.Draft && poll.Status != PollStatus.Closed) return false;
 
         poll.EndsAt = newEndsAt;
+        // Если голосование было закрыто, но его продляют — возвращаем его в активное состояние
+        if (poll.Status == PollStatus.Closed && (newEndsAt == null || newEndsAt.Value > DateTime.UtcNow))
+        {
+            poll.Status = PollStatus.Active;
+        }
         await _pollRepository.UpdateAsync(poll);
         return true;
     }
@@ -170,6 +175,7 @@ public class PollService : IPollService
         var poll = await _pollRepository.GetByIdAsync(pollId);
         if (poll == null) return false;
 
+        await _voteRepository.DeleteByPollAsync(pollId);
         await _pollRepository.DeleteAsync(poll);
         return true;
     }

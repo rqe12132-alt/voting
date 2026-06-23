@@ -716,7 +716,7 @@
                         <td>
                             ${p.status === 'Draft' ? `<button class="btn btn-sm btn-success me-1" onclick="publishPoll('${p.id}')">Опубликовать</button>` : ''}
                             ${p.status === 'Active' ? `<button class="btn btn-sm btn-warning me-1" onclick="closePoll('${p.id}')">Закрыть</button>` : ''}
-                            ${p.status === 'Active' || p.status === 'Closed' ? `<button class="btn btn-sm btn-outline-secondary me-1" onclick="extendPoll('${p.id}')">Продлить</button>` : ''}
+                            ${canExtendPoll(p) ? `<button class="btn btn-sm btn-outline-secondary me-1" onclick="extendPoll('${p.id}')">Продлить</button>` : ''}
                             ${p.status === 'Active' || p.status === 'Closed' ? `<a class="btn btn-sm btn-outline-dark me-1" href="/poll.html?id=${p.id}&v=2" target="_blank">Результаты</a>` : ''}
                             <button class="btn btn-sm btn-outline-info me-1" onclick="exportPoll('${p.id}')">Excel</button>
                             <button class="btn btn-sm btn-outline-danger" onclick="deletePoll('${p.id}')">Удалить</button>
@@ -727,7 +727,7 @@
                 container.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="selectAllPolls" onchange="toggleSelectAll()">
+                            <input class="form-check-input" type="checkbox" id="selectAllPolls" onchange="toggleSelectAll(this)">
                             <label class="form-check-label" for="selectAllPolls">Выбрать все</label>
                         </div>
                         <button class="btn btn-sm btn-danger" id="deleteSelectedBtn" onclick="deleteSelectedPolls()" disabled>
@@ -737,7 +737,7 @@
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead class="table-light">
-                                <tr><th class="text-center" style="width:40px"><input class="form-check-input" type="checkbox" id="selectAllHeader" onchange="toggleSelectAll()"></th><th>Название</th><th>Статус</th><th>Тип</th><th>Создано</th><th>Срок</th><th>Действия</th></tr>
+                                <tr><th class="text-center" style="width:40px"><input class="form-check-input" type="checkbox" id="selectAllHeader" onchange="toggleSelectAll(this)"></th><th>Название</th><th>Статус</th><th>Тип</th><th>Создано</th><th>Срок</th><th>Действия</th></tr>
                             </thead>
                             <tbody>${rows}</tbody>
                         </table>
@@ -760,6 +760,12 @@
                 case 'Closed': return 'dark';
                 default: return 'light';
             }
+        }
+
+        function canExtendPoll(p) {
+            if (p.status !== 'Active') return false;
+            if (!p.endsAt) return true;
+            return new Date(p.endsAt) > new Date();
         }
 
         function getTypeLabel(type) {
@@ -796,17 +802,31 @@
         async function extendPoll(id) {
             const days = prompt('На сколько дней продлить голосование? (0 = без срока)', '7');
             if (days === null) return;
-            
+
             const numDays = parseInt(days);
             let newDate = null;
             if (numDays > 0) {
-                const d = new Date();
-                d.setDate(d.getDate() + numDays);
-                newDate = d.toISOString();
+                // Находим текущее голосование, чтобы продлить от его endsAt, а не от "сейчас"
+                const polls = await api('/admin/polls');
+                const poll = polls.find(p => p.id === id);
+
+                let baseDate;
+                if (poll && poll.endsAt) {
+                    const endsAt = new Date(poll.endsAt);
+                    baseDate = endsAt < new Date() ? new Date() : endsAt;
+                } else {
+                    // Если срока не было — по умолчанию ставим 22:00
+                    baseDate = new Date();
+                    baseDate.setHours(22, 0, 0, 0);
+                }
+
+                // Добавляем ровно N суток (24 часа * N)
+                baseDate.setTime(baseDate.getTime() + numDays * 24 * 60 * 60 * 1000);
+                newDate = baseDate.toISOString();
             }
 
             try {
-                await api(`/admin/polls/${id}/extend`, { 
+                await api(`/admin/polls/${id}/extend`, {
                     method: 'POST',
                     body: { endsAt: newDate }
                 });
@@ -837,8 +857,10 @@
             if (allCb) allCb.checked = all.length > 0 && all.length === checked.length;
         }
 
-        function toggleSelectAll() {
-            const checked = document.getElementById('selectAllHeader').checked;
+        function toggleSelectAll(source) {
+            const checked = source.checked;
+            document.getElementById('selectAllHeader').checked = checked;
+            document.getElementById('selectAllPolls').checked = checked;
             document.querySelectorAll('.poll-select').forEach(cb => cb.checked = checked);
             updateSelectedCount();
         }

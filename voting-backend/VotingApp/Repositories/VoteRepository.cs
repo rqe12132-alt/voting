@@ -61,4 +61,11 @@ public class VoteRepository : IVoteRepository
             .OrderByDescending(v => v.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task DeleteByPollAsync(Guid pollId)
+    {
+        await _context.Votes
+            .Where(v => v.PollId == pollId)
+            .ExecuteDeleteAsync();
+    }
 }

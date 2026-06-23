@@ -4,6 +4,7 @@ using System.Security.Claims;
 using VotingApp.DTOs.Vote;
 using VotingApp.Services;
 
+
 namespace VotingApp.Controllers;
 
 [ApiController]
@@ -24,7 +25,6 @@ public class VotesController : ControllerBase
     public async Task<IActionResult> Vote(Guid pollId, [FromBody] VoteRequest request)
     {
         var userId = GetUserId();
-        var email = GetUserEmail();
         if (!userId.HasValue) return Unauthorized();
 
         var success = await _voteService.VoteAsync(userId.Value, pollId, request);
@@ -33,7 +33,7 @@ public class VotesController : ControllerBase
             return BadRequest(new { message = "Не удалось проголосовать. Возможно, вы уже голосовали или голосование неактивно." });
         }
 
-        await _auditService.LogAsync(userId, email ?? "", "VOTE", "Poll", pollId.ToString(), "Пользователь проголосовал");
+        await _auditService.LogAsync(null, "", "VOTE", "Poll", pollId.ToString(), "Анонимный голос");
         return Ok(new { message = "Голос принят" });
     }
 
@@ -69,9 +69,4 @@ public class VotesController : ControllerBase
         return null;
     }
 
-    private string? GetUserEmail()
-    {
-        return User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email)?.Value
-            ?? User.FindFirst("email")?.Value;
-    }
 }

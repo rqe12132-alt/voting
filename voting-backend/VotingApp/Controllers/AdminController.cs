@@ -87,9 +87,9 @@ public class AdminController : ControllerBase
         return Ok(votes.Select(v => new
         {
             v.Id,
-            v.UserId,
-            UserEmail = v.User?.Email,
-            UserName = v.User?.FullName,
+            UserId = (Guid?)null,
+            UserEmail = (string?)null,
+            UserName = (string?)"Аноним",
             v.OptionId,
             OptionText = v.Option?.Text,
             v.CreatedAt

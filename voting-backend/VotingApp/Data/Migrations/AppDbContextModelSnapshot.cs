@@ -66,7 +66,7 @@ namespace VotingApp.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("VotingApp.Models.PersonalId", b =>
@@ -96,7 +96,7 @@ namespace VotingApp.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PersonalIds");
+                    b.ToTable("PersonalIds", (string)null);
                 });
 
             modelBuilder.Entity("VotingApp.Models.Poll", b =>
@@ -148,7 +148,7 @@ namespace VotingApp.Data.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Polls");
+                    b.ToTable("Polls", (string)null);
                 });
 
             modelBuilder.Entity("VotingApp.Models.PollOption", b =>
@@ -175,7 +175,7 @@ namespace VotingApp.Data.Migrations
 
                     b.HasIndex("PollId");
 
-                    b.ToTable("PollOptions");
+                    b.ToTable("PollOptions", (string)null);
                 });
 
             modelBuilder.Entity("VotingApp.Models.RefreshToken", b =>
@@ -208,7 +208,7 @@ namespace VotingApp.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("VotingApp.Models.User", b =>
@@ -252,7 +252,7 @@ namespace VotingApp.Data.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("VotingApp.Models.Vote", b =>
@@ -282,7 +282,7 @@ namespace VotingApp.Data.Migrations
                     b.HasIndex("UserId", "PollId")
                         .IsUnique();
 
-                    b.ToTable("Votes");
+                    b.ToTable("Votes", (string)null);
                 });
 
             modelBuilder.Entity("VotingApp.Models.PersonalId", b =>
